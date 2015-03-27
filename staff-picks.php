@@ -191,6 +191,21 @@ function staff_picks_admin_css() {
 function staff_picks_public_css() {
   ?>
   <style>
+    .staff_picks_format {
+      font-size:smaller;
+    }
+    .staff_picks_format a {
+      color: inherit;
+    }
+    .staff_picks_byline {
+      font-style: italic;
+    }
+    .staff_picks_byline:before {
+      content: " — ";
+    }
+    .book-jacket, #content .wp-caption .book-jacket {
+      max-width: 200px;
+    }
   </style>
   <?php
 }
@@ -214,6 +229,9 @@ function staff_picks_custom_columns($column){
     case 'staff-picks-formats':
       echo implode(', ', wp_get_post_terms($post->ID, 'staff_pick_formats', array('fields' => 'names')));
       break;
+    case 'staff-picks-reviewers':
+      echo implode(', ', wp_get_post_terms($post->ID, 'staff_pick_reviewers', array('fields' => 'names')));
+      break;
     case 'staff-picks-audiences':
       echo implode(', ', wp_get_post_terms($post->ID, 'staff_pick_audiences', array('fields' => 'names')));
       break;
@@ -232,6 +250,7 @@ function staff_picks_manage_columns($columns){
   $columns = array_merge( $columns, array(
     'title' => 'Title',
     'staff-picks-author' => 'Author',
+    'staff-picks-reviewers' => 'Reviewer',
     'staff-picks-formats' => 'Format',
     'staff-picks-audiences' => 'Audience',
     'staff-picks-categories' => 'Categories',
@@ -262,7 +281,12 @@ function staff_picks_single_template($template){
 function staff_picks_archive_template($template){
   global $post;
 
-  if (is_post_type_archive('staff_picks')) {
+  if (is_post_type_archive('staff_picks')
+    or is_tax('staff_pick_categories')
+    or is_tax('staff_pick_audiences')
+    or is_tax('staff_pick_formats')
+    or is_tax('staff_pick_reviewers')
+  ) {
      $template = dirname( __FILE__ ) . '/archive-staff-pick.php';
   }
   return $template;

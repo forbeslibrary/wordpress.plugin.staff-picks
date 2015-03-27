@@ -6,7 +6,7 @@ $post = get_post();
 
 get_header();
 ?>
-<div id="content">test
+<div id="content">
 <?php while ( have_posts() ): ?>
   <?php
   the_post();
