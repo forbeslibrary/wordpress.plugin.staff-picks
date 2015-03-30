@@ -4,6 +4,28 @@
  */
 
 /**
+ * Returns a suitable title for an staff picks archive or taxonomy page.
+ */
+function staff_picks_get_title() {
+  if (is_post_type_archive('staff_picks')) {
+    return __('Staff Picks');
+  }
+  if (is_tax('staff_pick_categories')) {
+    return single_term_title(__('Staff Picks Category: '), False);
+  }
+  if (is_tax('staff_pick_audiences')) {
+    return single_term_title('Staff Picks for ', False);
+  }
+  if (is_tax('staff_pick_formats')) {
+    return single_term_title(__('Staff Picks Format: '), False);
+  }
+  if (is_tax('staff_pick_reviewers')) {
+    return single_term_title(__('Staff Picks by '), False);
+  }
+  return Null;
+}
+
+/**
  * Returns a simple HTML rendering of the staff_pick.
  */
 function staff_picks_display($post) {
@@ -11,7 +33,7 @@ function staff_picks_display($post) {
   $metadata = maybe_unserialize(
     $custom["staff_pick_metadata"][0]
   );
-  
+
   ob_start();?>
   <article id="post-<?php $post->ID ?>" class="staff_picks post hentry">
   <div class="entry-content">

@@ -26,6 +26,7 @@ add_action('pre_insert_term', 'staff_picks_restrict_insert_taxonomy_terms');
 add_filter('manage_staff_picks_posts_columns', 'staff_picks_manage_columns');
 add_filter('single_template', 'staff_picks_single_template');
 add_filter('archive_template', 'staff_picks_archive_template');
+add_filter( 'wp_title', 'staff_picks_modify_title');
 
 // shortcode hooks
 add_shortcode( 'staff_picks_list', 'staff_picks_list_shortcode_handler' );
@@ -330,4 +331,21 @@ function staff_picks_restrict_insert_taxonomy_terms($term, $taxonomy) {
     return new WP_Error( 'term_addition_blocked', __( 'You cannot add terms to this taxonomy' ) );
   }
   return $term;
+}
+
+/**
+ * Modifies the title.
+ *
+ * @wp-hook wp_title
+ */
+function staff_picks_modify_title($title, $sep) {
+  if (staff_picks_get_title()) {
+    if (!$sep) {
+      $sep = '|';
+    }
+    $title = staff_picks_get_title();
+    $blog_title = get_bloginfo( 'name' );
+    return "$title $sep $blog_title";
+  }
+  return $title;
 }
