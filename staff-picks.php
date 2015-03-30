@@ -179,6 +179,10 @@ function staff_picks_admin_css() {
       display: block;
       width: 100%;
     }
+    #dashboard_right_now .staff_picks-count a:before,
+    #dashboard_right_now .staff_picks-count span:before  {
+      content: "\f331";
+    }
   </style>
   <?php
 }
