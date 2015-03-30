@@ -32,7 +32,7 @@ add_shortcode( 'staff_picks_list', 'staff_picks_list_shortcode_handler' );
 
 
 /**
- * Registers the custom post type staff_picks and the custom taxonomy staff-pick-categories.
+ * Registers the custom post type staff_picks and the custom taxonomies.
  *
  * @wp-hook init
  */
@@ -134,7 +134,7 @@ function staff_picks_init() {
         'add_new_item' => 'Add New Category',
         'edit_item' => 'Edit Category',
       ),
-      'hierarchical' => True,
+      'hierarchical' => False,
       'show_ui' => True,
       'capabilities' => $taxonomy_capabilities
     )
@@ -191,6 +191,9 @@ function staff_picks_admin_css() {
 function staff_picks_public_css() {
   ?>
   <style>
+    .staff_picks {
+      clear: both;
+    }
     .staff_picks_format {
       font-size:smaller;
     }
