@@ -12,7 +12,7 @@ require_once( dirname( __FILE__ ) . '/admin.php' );
 
 // action hooks
 add_action('init', 'staff_picks_init');
-add_action('add_meta_boxes', 'staff_picks_remove_weaver_meta');
+add_action('add_meta_boxes', 'staff_picks_modify_metaboxes');
 add_action('save_post', 'staff_picks_save_details');
 add_action('manage_staff_picks_posts_custom_column', 'staff_picks_custom_columns');
 add_action('admin_head', 'staff_picks_admin_css' );
@@ -20,7 +20,6 @@ add_action('wp_head', 'staff_picks_public_css');
 add_action('dashboard_glance_items', 'staff_picks_add_glance_items');
 add_action('edit_form_after_title', 'staff_picks_editbox_metadata');
 add_action('pre_insert_term', 'staff_picks_restrict_insert_taxonomy_terms');
-
 
 // filter hooks
 add_filter('manage_staff_picks_posts_columns', 'staff_picks_manage_columns');
@@ -142,15 +141,17 @@ function staff_picks_init() {
   );
 }
 
-
 /**
  * The Weaver II theme adds a giant meta box that isn't much help with custom
- * post types. This code removes that box from staff pick edit pages.
+ * post types. This code removes that box from staff pick edit pages and changes
+ * the featured image box name and placement.
  *
  * @wp-hook add_meta_boxes
  */
-function staff_picks_remove_weaver_meta() {
+function staff_picks_modify_metaboxes() {
   remove_meta_box('wii_post-box2', 'staff_picks', 'normal');
+  remove_meta_box( 'postimagediv', 'staff_picks', 'side' );
+  add_meta_box( 'postimagediv', __('Book Jacket Image'), 'post_thumbnail_meta_box', 'staff_picks', 'side', 'high' );
 }
 
 
