@@ -10,6 +10,9 @@ require_once( dirname( __FILE__ ) . '/helpers.php' );
 require_once( dirname( __FILE__ ) . '/shortcodes.php' );
 require_once( dirname( __FILE__ ) . '/admin.php' );
 
+// activation hooks
+register_activation_hook( __FILE__, 'staff_picks_flush_rewrites' );
+
 // action hooks
 add_action('init', 'staff_picks_init');
 add_action('add_meta_boxes', 'staff_picks_modify_metaboxes');
@@ -29,6 +32,14 @@ add_filter( 'wp_title', 'staff_picks_modify_title');
 
 // shortcode hooks
 add_shortcode( 'staff_picks_list', 'staff_picks_list_shortcode_handler' );
+
+/**
+ * Flush rewrite rules on plugin activation
+ */
+function staff_picks_flush_rewrites() {
+  staff_picks_init();
+  flush_rewrite_rules();
+}
 
 
 /**
@@ -57,7 +68,7 @@ function staff_picks_init() {
     'publicly_queryable' => true,
     'show_ui' => true,
     'query_var' => true,
-    'rewrite' =>  true,
+    'rewrite' =>  array('with_front' => False),
     'capability_type' => 'post',
     'has_archive' => true,
     'hierarchical' => false,
@@ -88,6 +99,7 @@ function staff_picks_init() {
       ),
       'hierarchical' => True,
       'show_ui' => True,
+      'rewrite' => array('with_front' => False),
       'capabilities' => $taxonomy_capabilities
     )
   );
@@ -104,6 +116,7 @@ function staff_picks_init() {
       ),
       'hierarchical' => True,
       'show_ui' => True,
+      'rewrite' => array('with_front' => False),
       'capabilities' => $taxonomy_capabilities
     )
   );
@@ -120,6 +133,7 @@ function staff_picks_init() {
       ),
       'hierarchical' => True,
       'show_ui' => True,
+      'rewrite' => array('with_front' => False),
       'capabilities' => $taxonomy_capabilities
     )
   );
@@ -136,6 +150,7 @@ function staff_picks_init() {
       ),
       'hierarchical' => False,
       'show_ui' => True,
+      'rewrite' => array('with_front' => False),
       'capabilities' => $taxonomy_capabilities
     )
   );
