@@ -88,7 +88,7 @@ function staff_picks_init() {
       ),
       'hierarchical' => True,
       'show_ui' => True,
-      'capabilities' => taxonomy_capabilities
+      'capabilities' => $taxonomy_capabilities
     )
   );
 
@@ -100,11 +100,11 @@ function staff_picks_init() {
       'labels' => array(
         'singular_label' => 'Format',
         'add_new_item' => 'Add New Format',
-        'edit_item' => 'edit_format',
+        'edit_item' => 'Edit Format',
       ),
       'hierarchical' => True,
       'show_ui' => True,
-      'capabilities' => taxonomy_capabilities
+      'capabilities' => $taxonomy_capabilities
     )
   );
 
