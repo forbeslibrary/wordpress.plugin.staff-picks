@@ -7,7 +7,7 @@ $post = get_post();
 get_header();
 ?>
 <div id="content">
-  <h1>
+  <h1 class="entry-title">
     <?php echo staff_picks_get_title(); ?>
   </h1>
   <?php while ( have_posts() ): ?>
