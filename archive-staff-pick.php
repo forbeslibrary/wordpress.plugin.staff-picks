@@ -11,12 +11,16 @@ get_header();
     <h1 class="entry-title">
       <?php echo staff_picks_get_title(); ?>
     </h1>
-    <?php while ( have_posts() ): ?>
-      <?php
-      the_post();
-      echo staff_picks_display(get_post());
-      ?>
-    <?php endwhile; ?>
+    <?php if ( have_posts() ): ?>
+      <?php while ( have_posts() ): ?>
+        <?php
+        the_post();
+        echo staff_picks_display(get_post());
+        ?>
+      <?php endwhile; ?>
+    <?php else: ?>
+      <?php echo __('Nothing found'); ?>
+    <?php endif; ?>
   </div>
 </div>
 <div id="sidebar_wrap_right" class="right-1-col equal_height">
