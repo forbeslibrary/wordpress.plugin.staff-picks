@@ -9,6 +9,7 @@
 require_once( dirname( __FILE__ ) . '/helpers.php' );
 require_once( dirname( __FILE__ ) . '/shortcodes.php' );
 require_once( dirname( __FILE__ ) . '/admin.php' );
+require_once( dirname( __FILE__ ) . '/widget.php' );
 
 // activation hooks
 register_activation_hook( __FILE__, 'staff_picks_flush_rewrites' );
@@ -23,6 +24,7 @@ add_action('wp_head', 'staff_picks_public_css');
 add_action('dashboard_glance_items', 'staff_picks_add_glance_items');
 add_action('edit_form_after_title', 'staff_picks_editbox_metadata');
 add_action('pre_insert_term', 'staff_picks_restrict_insert_taxonomy_terms');
+add_action( 'widgets_init', 'staff_picks_register_widgets' );
 
 // filter hooks
 add_filter('manage_staff_picks_posts_columns', 'staff_picks_manage_columns');
@@ -230,6 +232,12 @@ function staff_picks_public_css() {
     .book-jacket, #content .wp-caption .book-jacket {
       max-width: 200px;
     }
+    .staff_picks_widget_image {
+      border-radius: 1em;
+      width: 48%;
+      vertical-align: middle;
+      margin: 1px 1% 1px 0;
+    }
   </style>
   <?php
 }
@@ -364,4 +372,13 @@ function staff_picks_modify_title($title, $sep) {
     return "$title $sep $blog_title";
   }
   return $title;
+}
+
+/**
+ * Initializes widgets.
+ *
+ * @wp-hook widgets_init
+ */
+function staff_picks_register_widgets() {
+  register_widget( 'Staff_Picks_Widget' );
 }
