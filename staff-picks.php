@@ -18,6 +18,7 @@ register_activation_hook(__FILE__, 'staff_picks_flush_rewrites');
 add_action('add_meta_boxes', 'staff_picks_modify_metaboxes');
 add_action('admin_head', 'staff_picks_admin_css');
 add_action('admin_notices', 'staff_picks_admin_notice');
+add_filter('body_class', 'staff_picks_class_names');
 add_action('dashboard_glance_items', 'staff_picks_add_glance_items');
 add_action('edit_form_after_title', 'staff_picks_editbox_metadata');
 add_action('init', 'staff_picks_init');
@@ -495,4 +496,30 @@ function staff_picks_modify_title($title, $sep) {
  */
 function staff_picks_register_widgets() {
   register_widget( 'Staff_Picks_Widget' );
+}
+
+/**
+ * Addes a classname to the body by audience, for easier css styling
+ * wp-hook body-class
+ */
+function staff_picks_class_names( $classes ) {
+  global $wp_query;
+
+  if (is_single()) {
+    $post = $wp_query->get_queried_object();
+    $audiences = wp_get_post_terms(
+      $post->ID,
+      'staff_pick_audiences',
+      array('fields' => 'names')
+    );
+    $classes = array_merge($classes, array_map(strtolower, $audiences));
+  }
+
+  if (is_tax()) {
+    $term = $wp_query->get_queried_object();
+    if ( $term->taxonomy == 'staff_pick_audiences' ) {
+      $classes[] = strtolower( $term->name );
+    }
+  }
+  return $classes;
 }
