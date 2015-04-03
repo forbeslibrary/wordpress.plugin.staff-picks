@@ -183,14 +183,14 @@ function staff_picks_modify_metaboxes() {
 function staff_picks_admin_notice() {
   global $post;
 
-  $errors = get_transient( "staff_picks_{$post->ID}" );
+  $errors = get_transient( "staff_picks_errors_{$post->ID}" );
   foreach ($errors as $error): ?>
     <div class="error">
       <p><?php echo $error; ?></p>
     </div>
     <?php
   endforeach;
-  delete_transient( "staff_picks_{$post->ID}" );
+  delete_transient( "staff_picks_errors_{$post->ID}" );
 }
 
 /**
@@ -259,7 +259,7 @@ function staff_picks_validate_and_save( $post_id ){
 
   if ($errors) {
     // Save the errors using the transients api
-    set_transient( "staff_picks_{$post->ID}", $errors, 120 );
+    set_transient( "staff_picks_errors_{$post->ID}", $errors, 120 );
 
     // we must remove this action or it will loop for ever
     remove_action('save_post', 'staff_picks_validate_and_save');
@@ -280,22 +280,19 @@ function staff_picks_validate_and_save( $post_id ){
  *  Fix status message when user tries to publish an invalid staff pick.
  *
  * If the user hits the publish button the publish message will display even if
- * we have changed the status to draft during validation. This fixes that.
+ * we have changed the status to draft during validation. This fixes that by
+ * modifying the message if any errors have been queued.
  *
  * @wp-hook redirect_post_location
  */
-function staff_picks_fix_status_message($location, $post_id){
-    //If post was published...
-    if (isset($_POST['publish'])){
-        //obtain current post status
-        $status = get_post_status( $post_id );
+function staff_picks_fix_status_message($location, $post_id) {
+  //If any staff pick errors have been queued...
+  if (get_transient( "staff_picks_errors_{$post->ID}" )){
+    $status = get_post_status( $post_id );
+    $location = add_query_arg('message', 10, $location);
+  }
 
-        //The post was 'published', but if it is still a draft, display draft message (10).
-        if($status=='draft')
-            $location = add_query_arg('message', 10, $location);
-    }
-
-    return $location;
+  return $location;
 }
 
 /**
