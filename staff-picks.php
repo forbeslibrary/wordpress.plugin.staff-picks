@@ -224,37 +224,37 @@ function staff_picks_validate_and_save( $post_id ){
 
     if (isset($metadata['author'])) {
         if (trim($metadata['author']) == false) {
-        array_push($errors, __('The author field may not be blank'));
+        $errors[] = __('The author field may not be blank');
       }
     } else {
-      array_push($errors, __('The author field was missing'));
+      $errors[] = __('The author field was missing');
     }
 
     if (isset($metadata['catalog_url'])) {
         if (trim($metadata['catalog_url']) == false) {
-        array_push($errors, __('The catalog url field may not be blank'));
+          $errors[] = __('The catalog url field may not be blank');
       }
     } else {
-      array_push($errors, __('The catalog url field was missing'));
+      $errors[] = __('The catalog url field was missing');
     }
   }
 
   if ( !get_the_terms( $post->ID, 'staff_pick_reviewers' ) ) {
-   array_push($errors, __('You must choose a reviewer'));
+    $errors[] = __('You must choose a reviewer');
   } elseif ( count(get_the_terms( $post->ID, 'staff_pick_reviewers' )) > 1 ) {
-    array_push($errors, __('You may only choose one reviewer'));
+    $errors[] = __('You may only choose one reviewer');
   }
 
   if ( !get_the_terms( $post->ID, 'staff_pick_audiences' ) ) {
-   array_push($errors, __('You must choose at least one audience'));
+    $errors[] = __('You must choose at least one audience');
   }
 
   if ( !get_the_terms( $post->ID, 'staff_pick_formats' ) ) {
-   array_push($errors, __('You must choose at least one format'));
+    $errors[] = __('You must choose at least one format');
   }
 
   if ( !has_post_thumbnail( $post->ID ) ) {
-    array_push($errors, __('You must set a cover image'));
+    $errors[] = __('You must set a cover image');
   }
 
   if ($errors) {
