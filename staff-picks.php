@@ -16,19 +16,21 @@ register_activation_hook(__FILE__, 'staff_picks_flush_rewrites');
 
 // action hooks
 add_action('add_meta_boxes', 'staff_picks_modify_metaboxes');
-add_action('admin_head', 'staff_picks_admin_css' );
+add_action('admin_head', 'staff_picks_admin_css');
+add_action('admin_notices', 'staff_picks_admin_notice');
 add_action('dashboard_glance_items', 'staff_picks_add_glance_items');
 add_action('edit_form_after_title', 'staff_picks_editbox_metadata');
 add_action('init', 'staff_picks_init');
 add_action('manage_staff_picks_posts_custom_column', 'staff_picks_custom_columns');
 add_action('pre_insert_term', 'staff_picks_restrict_insert_taxonomy_terms');
-add_action('save_post', 'staff_picks_save_details');
+add_action('save_post', 'staff_picks_validate_and_save');
 add_action('widgets_init', 'staff_picks_register_widgets');
 add_action('wp_head', 'staff_picks_public_css');
 
 // filter hooks
 add_filter('archive_template', 'staff_picks_archive_template');
 add_filter('manage_staff_picks_posts_columns', 'staff_picks_manage_columns');
+add_filter('redirect_post_location','staff_picks_fix_status_message');
 add_filter('single_template', 'staff_picks_single_template');
 add_filter('wp_title', 'staff_picks_modify_title');
 
@@ -168,19 +170,127 @@ function staff_picks_init() {
 function staff_picks_modify_metaboxes() {
   remove_meta_box('wii_post-box2', 'staff_picks', 'normal');
   remove_meta_box( 'postimagediv', 'staff_picks', 'side' );
-  add_meta_box( 'postimagediv', __('Book Jacket Image'), 'post_thumbnail_meta_box', 'staff_picks', 'side', 'high' );
+  add_meta_box( 'postimagediv', __('Cover Image'), 'post_thumbnail_meta_box', 'staff_picks', 'side', 'high' );
 }
 
+
+/**
+ * Displays admin notices such as validation errors
+ *
+ * @wp-hook admin_notices
+ */
+function staff_picks_admin_notice() {
+  global $post;
+  $errors = get_transient( "staff_picks_{$post->ID}" );
+  foreach ($errors as $error): ?>
+    <div class="error">
+      <p><?php echo $error; ?></p>
+    </div>
+    <?php
+  endforeach;
+  delete_transient( "staff_picks_{$post->ID}" );
+}
 
 /**
  * Save custom fields from staff_picks edit page.
  *
  * @wp-hook save_post
  */
-function staff_picks_save_details(){
-  global $post;
+function staff_picks_validate_and_save( $post_id ){
+  $post =  get_post( $post_id );
 
+  if ( $post->post_type != 'staff_picks' ) {
+    return;
+  }
+
+  // Update custom field
   update_post_meta($post->ID, 'staff_pick_metadata', $_POST['staff_pick_metadata']);
+
+  // Stop if this is just a draft
+  if ( get_post_status( $post->ID ) == 'draft' ) {
+    return;
+  }
+
+  // Validation
+  $errors = array();
+
+  if (isset($_POST['staff_pick_metadata'])) {
+    $metadata = $_POST['staff_pick_metadata'];
+
+    if (isset($metadata['author'])) {
+        if (trim($metadata['author']) == false) {
+        array_push($errors, __('The author field may not be blank'));
+      }
+    } else {
+      array_push($errors, __('The author field was missing'));
+    }
+
+    if (isset($metadata['catalog_url'])) {
+        if (trim($metadata['catalog_url']) == false) {
+        array_push($errors, __('The catalog url field may not be blank'));
+      }
+    } else {
+      array_push($errors, __('The catalog url field was missing'));
+    }
+  }
+
+  if ( !get_the_terms( $post->ID, 'staff_pick_reviewers' ) ) {
+   array_push($errors, __('You must choose at a reviewer'));
+  } elseif ( count(get_the_terms( $post->ID, 'staff_pick_reviewers' )) > 1 ) {
+    array_push($errors, __('You may only choose one reviewer'));
+  }
+
+  if ( !get_the_terms( $post->ID, 'staff_pick_audiences' ) ) {
+   array_push($errors, __('You must choose at least one audience'));
+  }
+
+  if ( !get_the_terms( $post->ID, 'staff_pick_formats' ) ) {
+   array_push($errors, __('You must choose at least one format'));
+  }
+
+  if ( !has_post_thumbnail( $post->ID ) ) {
+    array_push($errors, __('You must set a cover image'));
+  }
+
+  if ($errors) {
+    // Save the errors using the transients api
+    set_transient( "staff_picks_{$post->ID}", $errors, 120 );
+
+    // we must remove this action or it will loop for ever
+    remove_action('save_post', 'staff_picks_validate_and_save');
+
+    // Change post from published to draft
+    $post->post_status = 'draft';
+
+    // update the post
+    wp_update_post( $post );
+
+    // we must add back this action
+    add_action('save_post', 'staff_picks_validate_and_save');
+  }
+
+}
+
+/**
+ *  Fix status message when user tries to publish an invalid staff pick.
+ *
+ * If the user hits the publish button the publish message will display even if
+ * we have changed the status to draft during validation. This fixes that.
+ *
+ * @wp-hook redirect_post_location
+ */
+function staff_picks_fix_status_message($location, $post_id){
+    //If post was published...
+    if (isset($_POST['publish'])){
+        //obtain current post status
+        $status = get_post_status( $post_id );
+
+        //The post was 'published', but if it is still a draft, display draft message (10).
+        if($status=='draft')
+            $location = add_query_arg('message', 10, $location);
+    }
+
+    return $location;
 }
 
 /**
