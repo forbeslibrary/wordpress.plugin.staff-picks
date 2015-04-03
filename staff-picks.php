@@ -6,34 +6,34 @@
  * Author: Benjamin Kalish
  */
 
-require_once( dirname( __FILE__ ) . '/helpers.php' );
-require_once( dirname( __FILE__ ) . '/shortcodes.php' );
-require_once( dirname( __FILE__ ) . '/admin.php' );
-require_once( dirname( __FILE__ ) . '/widget.php' );
+require_once(dirname( __FILE__ ) . '/helpers.php');
+require_once(dirname( __FILE__ ) . '/shortcodes.php');
+require_once(dirname( __FILE__ ) . '/admin.php');
+require_once(dirname( __FILE__ ) . '/widget.php');
 
 // activation hooks
-register_activation_hook( __FILE__, 'staff_picks_flush_rewrites' );
+register_activation_hook(__FILE__, 'staff_picks_flush_rewrites');
 
 // action hooks
-add_action('init', 'staff_picks_init');
 add_action('add_meta_boxes', 'staff_picks_modify_metaboxes');
-add_action('save_post', 'staff_picks_save_details');
-add_action('manage_staff_picks_posts_custom_column', 'staff_picks_custom_columns');
 add_action('admin_head', 'staff_picks_admin_css' );
-add_action('wp_head', 'staff_picks_public_css');
 add_action('dashboard_glance_items', 'staff_picks_add_glance_items');
 add_action('edit_form_after_title', 'staff_picks_editbox_metadata');
+add_action('init', 'staff_picks_init');
+add_action('manage_staff_picks_posts_custom_column', 'staff_picks_custom_columns');
 add_action('pre_insert_term', 'staff_picks_restrict_insert_taxonomy_terms');
-add_action( 'widgets_init', 'staff_picks_register_widgets' );
+add_action('save_post', 'staff_picks_save_details');
+add_action('widgets_init', 'staff_picks_register_widgets');
+add_action('wp_head', 'staff_picks_public_css');
 
 // filter hooks
+add_filter('archive_template', 'staff_picks_archive_template');
 add_filter('manage_staff_picks_posts_columns', 'staff_picks_manage_columns');
 add_filter('single_template', 'staff_picks_single_template');
-add_filter('archive_template', 'staff_picks_archive_template');
-add_filter( 'wp_title', 'staff_picks_modify_title');
+add_filter('wp_title', 'staff_picks_modify_title');
 
 // shortcode hooks
-add_shortcode( 'staff_picks_list', 'staff_picks_list_shortcode_handler' );
+add_shortcode('staff_picks_list', 'staff_picks_list_shortcode_handler');
 
 /**
  * Flush rewrite rules on plugin activation
