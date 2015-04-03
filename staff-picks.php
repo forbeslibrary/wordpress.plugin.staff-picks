@@ -181,6 +181,7 @@ function staff_picks_modify_metaboxes() {
  */
 function staff_picks_admin_notice() {
   global $post;
+
   $errors = get_transient( "staff_picks_{$post->ID}" );
   foreach ($errors as $error): ?>
     <div class="error">
@@ -206,8 +207,11 @@ function staff_picks_validate_and_save( $post_id ){
   // Update custom field
   update_post_meta($post->ID, 'staff_pick_metadata', $_POST['staff_pick_metadata']);
 
-  // Stop if this is just a draft
-  if ( get_post_status( $post->ID ) == 'draft' ) {
+  // Stop interfering if this is a draft or the post is being deleted
+  if ( in_array(
+    get_post_status( $post->ID ),
+    array('draft', 'auto-draft', 'trash')
+  )) {
     return;
   }
 
@@ -235,7 +239,7 @@ function staff_picks_validate_and_save( $post_id ){
   }
 
   if ( !get_the_terms( $post->ID, 'staff_pick_reviewers' ) ) {
-   array_push($errors, __('You must choose at a reviewer'));
+   array_push($errors, __('You must choose a reviewer'));
   } elseif ( count(get_the_terms( $post->ID, 'staff_pick_reviewers' )) > 1 ) {
     array_push($errors, __('You may only choose one reviewer'));
   }
