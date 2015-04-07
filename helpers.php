@@ -46,8 +46,7 @@ function staff_picks_display($post) {
       </span>
     </h2>
     <a href="<?php echo $metadata['catalog_url']; ?>"
-      class="wp-caption"
-      style="clear: left;float: left;margin-bottom: 1em;margin-right: 1em">
+      class="wp-caption book-jacket-caption">
       <?php
       echo get_the_post_thumbnail(
         $post->ID,

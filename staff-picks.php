@@ -333,8 +333,28 @@ function staff_picks_public_css() {
     .staff_picks_byline:before {
       content: " — ";
     }
-    .book-jacket, #content .wp-caption .book-jacket {
+    .book-jacket, #content .book-jacket-caption .book-jacket {
       max-width: 200px;
+    }
+    .book-jacket-caption {
+      clear: left;
+      float: left;
+      margin-bottom: 1em;
+      margin-right: 1em;
+    }
+    @media (max-width: 600px) {
+      .book-jacket-caption, #content .book-jacket-caption .book-jacket-caption {
+        clear: both;
+        float: none;
+        display: block;
+        margin-bottom: 1em;
+        margin-right: 1em;
+      }
+      .book-jacket, #content .book-jacket-caption .book-jacket {
+        float: none;
+        clear: both;
+        margin: 0 auto 1em;
+      }
     }
     .staff_picks_widget_image {
       border-radius: 1em;
