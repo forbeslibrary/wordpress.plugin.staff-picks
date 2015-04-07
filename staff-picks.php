@@ -222,14 +222,6 @@ function staff_picks_validate_and_save( $post_id ){
   if (isset($_POST['staff_pick_metadata'])) {
     $metadata = $_POST['staff_pick_metadata'];
 
-    if (isset($metadata['author'])) {
-        if (trim($metadata['author']) == false) {
-        $errors[] = __('The author field may not be blank');
-      }
-    } else {
-      $errors[] = __('The author field was missing');
-    }
-
     if (isset($metadata['catalog_url'])) {
         if (trim($metadata['catalog_url']) == false) {
           $errors[] = __('The catalog url field may not be blank');
