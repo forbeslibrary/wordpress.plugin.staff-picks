@@ -104,14 +104,14 @@ function staff_picks_get_category_ids($args) {
   		SELECT DISTINCT terms2.term_id as tag_id
   		FROM
   			wp_posts as p1
-  			LEFT JOIN wp_term_relationships as r1 ON p1.ID = r1.object_ID
-  			LEFT JOIN wp_term_taxonomy as t1 ON r1.term_taxonomy_id = t1.term_taxonomy_id
-  			LEFT JOIN wp_terms as terms1 ON t1.term_id = terms1.term_id,
+  			LEFT JOIN {$wpdb->prefix}term_relationships as r1 ON p1.ID = r1.object_ID
+  			LEFT JOIN {$wpdb->prefix}term_taxonomy as t1 ON r1.term_taxonomy_id = t1.term_taxonomy_id
+  			LEFT JOIN {$wpdb->prefix}terms as terms1 ON t1.term_id = terms1.term_id,
 
   			wp_posts as p2
-  			LEFT JOIN wp_term_relationships as r2 ON p2.ID = r2.object_ID
-  			LEFT JOIN wp_term_taxonomy as t2 ON r2.term_taxonomy_id = t2.term_taxonomy_id
-  			LEFT JOIN wp_terms as terms2 ON t2.term_id = terms2.term_id
+  			LEFT JOIN {$wpdb->prefix}term_relationships as r2 ON p2.ID = r2.object_ID
+  			LEFT JOIN {$wpdb->prefix}term_taxonomy as t2 ON r2.term_taxonomy_id = t2.term_taxonomy_id
+  			LEFT JOIN {$wpdb->prefix}terms as terms2 ON t2.term_id = terms2.term_id
   		WHERE
   			t1.taxonomy = '%s' AND p1.post_status = 'publish' AND terms1.term_id = '%s' AND
   			t2.taxonomy = 'staff_pick_categories' AND p2.post_status = 'publish'
