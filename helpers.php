@@ -70,32 +70,6 @@ function staff_picks_display($post) {
 }
 
 /**
- * Returns a wp_query object for the passed shortcode attributes.
- */
-function staff_picks_query($atts) {
-  extract( shortcode_atts( array(
-    'staff_pick_audience' => null,
-  ), $atts ) );
-
-  $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
-
-  $query_args = array(
-    'post_type' => 'staff_picks',
-    'orderby' => 'title',
-    'order' => 'ASC',
-    'paged' => $paged,
-    );
-
-  if ($staff_pick_audience) {
-    $query_args['tax_query'] = array( array('taxonomy' => 'staff-pick-category', 'field'=>'slug', 'include_children'=>FALSE, 'terms' => $staff_pick_category) );
-  }
-
-  $the_query = new WP_Query( $query_args );
-
-  return $the_query;
-}
-
-/**
  * Get staff_pick_categories term ids associated with a specified taxonomy term
  */
 function staff_picks_get_category_ids($args) {

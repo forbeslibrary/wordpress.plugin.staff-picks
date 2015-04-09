@@ -7,7 +7,6 @@
  */
 
 require_once(dirname( __FILE__ ) . '/helpers.php');
-require_once(dirname( __FILE__ ) . '/shortcodes.php');
 require_once(dirname( __FILE__ ) . '/widget.php');
 if ( is_admin() ) {
   require_once(dirname( __FILE__ ) . '/admin.php');
