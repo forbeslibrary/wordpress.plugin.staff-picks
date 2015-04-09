@@ -55,11 +55,15 @@ get_header();
           'taxonomy' => $term->taxonomy,
           'term_id' => $term->term_id
         ));
+        wp_tag_cloud( array(
+          'taxonomy' => 'staff_pick_categories',
+          'include' => implode(' ', $categories)
+        ));
+      } else {
+        wp_tag_cloud( array(
+          'taxonomy' => 'staff_pick_categories',
+        ));
       }
-      wp_tag_cloud( array(
-        'taxonomy' => 'staff_pick_categories',
-        'include' => implode(' ', $categories)
-      ));
       ?>
     </div>
   </div>
