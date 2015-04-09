@@ -144,6 +144,10 @@ function staff_picks_modify_metaboxes() {
 function staff_picks_admin_notice() {
   global $post;
 
+  if (!isset($post)) {
+    return;
+  }
+
   $errors = get_transient( "staff_picks_errors_{$post->ID}" );
   if ($errors) {
     foreach ($errors as $error): ?>
