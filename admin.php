@@ -16,7 +16,9 @@ function staff_picks_validate_and_save( $post_id ){
   }
 
   // Update custom field
-  update_post_meta($post->ID, 'staff_pick_metadata', $_POST['staff_pick_metadata']);
+  if (isset($_POST['staff_pick_metadata'])) {
+    update_post_meta($post->ID, 'staff_pick_metadata', $_POST['staff_pick_metadata']);
+  }
 
   // Stop interfering if this is a draft or the post is being deleted
   if ( in_array(
@@ -168,7 +170,9 @@ function staff_picks_custom_columns($column){
 
   switch ($column) {
     case 'staff-picks-author':
-      echo $metadata['author'];
+      if (isset($metadata['author'])) {
+        echo $metadata['author'];
+      }
       break;
     case 'staff-picks-formats':
       echo implode(', ', wp_get_post_terms($post->ID, 'staff_pick_formats', array('fields' => 'names')));
@@ -245,9 +249,14 @@ function staff_picks_editbox_metadata(){
     return;
   }
   $custom = get_post_custom($post->ID);
-  $staff_pick_metadata = maybe_unserialize(
-    $custom["staff_pick_metadata"][0]
-  );
+  if (isset($custom["staff_pick_metadata"])) {
+    $staff_pick_metadata = maybe_unserialize(
+      $custom["staff_pick_metadata"][0]
+    );
+  } else {
+    $staff_pick_metadata['author'] = '';
+    $staff_pick_metadata['catalog_url'] = '';
+  }
   ?>
   <label>
     <span class="staff-picks-metadata-label">Author</span>
