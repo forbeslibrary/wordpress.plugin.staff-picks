@@ -486,14 +486,11 @@ function staff_picks_restrict_insert_taxonomy_terms($term, $taxonomy) {
  *
  * @wp-hook wp_title
  */
-function staff_picks_modify_title($title, $sep) {
+function staff_picks_modify_title($title) {
   if (staff_picks_get_title()) {
-    if (!$sep) {
-      $sep = '|';
-    }
     $title = staff_picks_get_title();
     $blog_title = get_bloginfo( 'name' );
-    return "$title $sep $blog_title";
+    return "$title";
   }
   return $title;
 }
