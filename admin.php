@@ -121,6 +121,40 @@ function staff_picks_admin_css() {
 }
 
 /**
+ * The Weaver II theme adds a giant meta box that isn't much help with custom
+ * post types. This code removes that box from staff pick edit pages and changes
+ * the featured image box name and placement.
+ *
+ * @wp-hook add_meta_boxes
+ */
+function staff_picks_modify_metaboxes() {
+  remove_meta_box('wii_post-box2', 'staff_picks', 'normal');
+  remove_meta_box( 'postimagediv', 'staff_picks', 'side' );
+  add_meta_box( 'postimagediv', __('Cover Image'), 'post_thumbnail_meta_box', 'staff_picks', 'side', 'high' );
+}
+
+
+/**
+ * Displays admin notices such as validation errors
+ *
+ * @wp-hook admin_notices
+ */
+function staff_picks_admin_notice() {
+  global $post;
+
+  $errors = get_transient( "staff_picks_errors_{$post->ID}" );
+  if ($errors) {
+    foreach ($errors as $error): ?>
+      <div class="error">
+        <p><?php echo $error; ?></p>
+      </div>
+      <?php
+    endforeach;
+  }
+  delete_transient( "staff_picks_errors_{$post->ID}" );
+}
+
+/**
  * Outputs the contents of each custom column on the staff_picks admin page.
  *
  * @wp-hook manage_staff_picks_posts_custom_column
