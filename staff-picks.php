@@ -1,9 +1,11 @@
 <?php
 /**
  * Plugin Name: Staff Picks
+ * Plugin URI: https://github.com/forbeslibrary/wordpress.plugin.staff-picks
  * Description: Adds a custom post type 'Staff Picks'.
  * Version: 1.1
  * Author: Benjamin Kalish
+ * Author URI: https://github.com/bkalish
  */
 
 require_once(dirname( __FILE__ ) . '/helpers.php');
