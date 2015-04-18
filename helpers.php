@@ -50,7 +50,7 @@ function staff_picks_display($post) {
       <?php
       echo get_the_post_thumbnail(
         $post->ID,
-        array(100,100),
+        'medium',
         array(
           'alt' => 'book-jacket',
           'class' => 'book-jacket'
