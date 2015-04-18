@@ -5,6 +5,8 @@
 
 class Staff_Picks_Widget extends WP_Widget {
 
+  const DEFAULT_COUNT = 6;
+
   /**
    * Sets up the widgets name etc
    */
@@ -27,11 +29,14 @@ class Staff_Picks_Widget extends WP_Widget {
     if ( ! empty( $instance['title'] ) ) {
       echo $args['before_title'] . apply_filters( 'widget_title', $instance['title'] ). $args['after_title'];
     }
+
+    $count = ( ! empty( $instance['count'] ) ? $instance['count'] : self::DEFAULT_COUNT );
+
     $my_query = new WP_Query( array(
       'post_type' => 'staff_picks',
       'order' => 'DESC',
       'orderby' => 'date',
-      'posts_per_page' => 6,
+      'posts_per_page' => $count,
     ) );
     while ( $my_query->have_posts() ) {
        $my_query->the_post();
@@ -41,6 +46,13 @@ class Staff_Picks_Widget extends WP_Widget {
          </a>
        <?php endif;
     }
+    if ($instance['show_link']): ?>
+      <p class="staff_picks_widget_link">
+        <a href="<?php echo get_post_type_archive_link('staff_picks'); ?>">
+          <?php echo $instance['link_text']; ?>
+        </a>
+      </p>
+    <?php endif;
     echo $args['after_widget'];
   }
 
@@ -50,11 +62,52 @@ class Staff_Picks_Widget extends WP_Widget {
    * @param array $instance The widget options
    */
   public function form( $instance ) {
-    $title = ! empty( $instance['title'] ) ? $instance['title'] : __( 'New title', 'text_domain' );
+    $title = ! empty( $instance['title'] ) ? $instance['title'] : __('New title');
+    $count = ! empty( $instance['count'] ) ? $instance['count'] : self::DEFAULT_COUNT;
+    $show_link = isset( $instance['show_link'] ) ? $instance['show_link'] : False;
+    $link_text = ! empty( $instance['link_text'] ) ? $instance['link_text'] : __('More Staff Picks');
     ?>
     <p>
-      <label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e( 'Title:' ); ?></label>
-      <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>">
+      <label>
+        <?php _e( 'Title:' ); ?>
+        <input type="text"
+          class="widefat"
+          id="<?php echo $this->get_field_id( 'title' ); ?>"
+          name="<?php echo $this->get_field_name( 'title' ); ?>"
+          value="<?php echo esc_attr( $title ); ?>"
+          >
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php _e( 'Number of staff picks to show in widget:' ); ?>
+        <input type="number"
+          id=<?php echo $this->get_field_id( 'count' ); ?>
+          name="<?php echo $this->get_field_name( 'count' ); ?>"
+          value="<?php echo esc_attr( $count ); ?>"
+          >
+      </label>
+    </p>
+    <p>
+      <label>
+        <input type="checkbox"
+          id="<?php echo $this->get_field_id( 'show_link' ); ?>"
+          name="<?php echo $this->get_field_name( 'show_link' ); ?>"
+          <?php if ($show_link): ?>checked="checked"<?php endif; ?>
+          >
+        <?php _e('Show link to staff picks page?'); ?>
+      </label>
+    </p>
+    <p>
+      <label>
+        Link text
+        <input type="text"
+          class="widefat"
+          id="<?php echo $this->get_field_id( 'link_text' ); ?>"
+          name="<?php echo $this->get_field_name( 'link_text' ); ?>"
+          value="<?php echo esc_attr( $link_text ); ?>"
+          >
+      </label>
     </p>
     <?php
   }
@@ -68,6 +121,9 @@ class Staff_Picks_Widget extends WP_Widget {
   public function update( $new_instance, $old_instance ) {
     $instance = array();
     $instance['title'] = ( ! empty( $new_instance['title'] ) ) ? strip_tags( $new_instance['title'] ) : '';
+    $instance['count'] = ( ! empty( $new_instance['count'] ) ) ? strip_tags( intval( $new_instance['count'] ) ) : self::DEFAULT_COUNT;
+    $instance['show_link'] = ! empty( $new_instance['show_link'] );
+    $instance['link_text'] = ( ! empty( $new_instance['link_text'] ) ) ? strip_tags( $new_instance['link_text'] ) : '';
 
     return $instance;
   }
