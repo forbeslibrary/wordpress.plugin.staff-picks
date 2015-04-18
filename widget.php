@@ -62,6 +62,7 @@ class Staff_Picks_Widget extends WP_Widget {
          </a>
        <?php endif;
     }
+    wp_reset_postdata();
     if ($instance['show_link']): ?>
       <p class="staff_picks_widget_link">
         <?php if ($instance['audience']==-1): ?>
