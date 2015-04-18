@@ -1,9 +1,11 @@
 <?php
 /**
  * Plugin Name: Staff Picks
+ * Plugin URI: https://github.com/forbeslibrary/wordpress.plugin.staff-picks
  * Description: Adds a custom post type 'Staff Picks'.
- * Version: 1.0
+ * Version: 1.1
  * Author: Benjamin Kalish
+ * Author URI: https://github.com/bkalish
  */
 
 require_once(dirname( __FILE__ ) . '/helpers.php');
@@ -215,6 +217,12 @@ function staff_picks_public_css() {
       width: 48%;
       vertical-align: middle;
       margin: 1px 1% 1px 0;
+    }
+    .staff_picks_widget_link {
+      text-align: center;
+      font-weight: bold;
+      font-size: larger;
+      padding: 0.5em;
     }
   </style>
   <?php
