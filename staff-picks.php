@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Staff Picks
  * Description: Adds a custom post type 'Staff Picks'.
- * Version: 1.0
+ * Version: 1.1
  * Author: Benjamin Kalish
  */
 
