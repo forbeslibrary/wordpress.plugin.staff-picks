@@ -216,6 +216,12 @@ function staff_picks_public_css() {
       vertical-align: middle;
       margin: 1px 1% 1px 0;
     }
+    .staff_picks_widget_link {
+      text-align: center;
+      font-weight: bold;
+      font-size: larger;
+      padding: 0.5em;
+    }
   </style>
   <?php
 }
