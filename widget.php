@@ -32,12 +32,28 @@ class Staff_Picks_Widget extends WP_Widget {
 
     $count = ( ! empty( $instance['count'] ) ? $instance['count'] : self::DEFAULT_COUNT );
 
-    $my_query = new WP_Query( array(
-      'post_type' => 'staff_picks',
-      'order' => 'DESC',
-      'orderby' => 'date',
-      'posts_per_page' => $count,
-    ) );
+    if ($instance['audience']==-1) {
+      // show all staff picks
+      $my_query = new WP_Query( array(
+        'post_type' => 'staff_picks',
+        'order' => 'DESC',
+        'orderby' => 'date',
+        'posts_per_page' => $count,
+      ) );
+    } else {
+      $my_query = new WP_Query( array(
+        'post_type' => 'staff_picks',
+        'tax_query' => array( array (
+          'taxonomy' => 'staff_pick_audiences',
+          'field' => 'term_id',
+          'terms' => intval($instance['audience'])
+        ) ),
+        'order' => 'DESC',
+        'orderby' => 'date',
+        'posts_per_page' => $count,
+      ) );
+    }
+
     while ( $my_query->have_posts() ) {
        $my_query->the_post();
        if ( has_post_thumbnail() ) : ?>
@@ -48,7 +64,11 @@ class Staff_Picks_Widget extends WP_Widget {
     }
     if ($instance['show_link']): ?>
       <p class="staff_picks_widget_link">
-        <a href="<?php echo get_post_type_archive_link('staff_picks'); ?>">
+        <?php if ($instance['audience']==-1): ?>
+          <a href="<?php echo get_post_type_archive_link('staff_picks'); ?>">
+        <?php else: ?>
+          <a href="<?php echo get_term_link(intval($instance['audience']), 'staff_pick_audiences'); ?>">
+        <?php endif; ?>
           <?php echo $instance['link_text']; ?>
         </a>
       </p>
@@ -66,6 +86,7 @@ class Staff_Picks_Widget extends WP_Widget {
     $count = ! empty( $instance['count'] ) ? $instance['count'] : self::DEFAULT_COUNT;
     $show_link = isset( $instance['show_link'] ) ? $instance['show_link'] : False;
     $link_text = ! empty( $instance['link_text'] ) ? $instance['link_text'] : __('More Staff Picks');
+    $audience = ! empty( $instance['audience'] ) ? $instance['audience'] : -1;
     ?>
     <p>
       <label>
@@ -86,6 +107,24 @@ class Staff_Picks_Widget extends WP_Widget {
           name="<?php echo $this->get_field_name( 'count' ); ?>"
           value="<?php echo esc_attr( $count ); ?>"
           >
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php _e('Which staff picks to show:'); ?></br>
+        <select
+          id="<?php echo $this->get_field_id( 'audience' ); ?>"
+          name="<?php echo $this->get_field_name( 'audience' ); ?>"
+          >
+          <option value="-1" <?php selected($audience, -1); ?>>
+            <?php _e('All'); ?>
+          </option>
+          <?php foreach( get_terms('staff_pick_audiences') as $term ): ?>
+            <option value="<?php echo $term->term_id; ?>" <?php selected($audience, $term->term_id); ?>>
+              <?php echo $term->name; ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
       </label>
     </p>
     <p>
@@ -124,6 +163,7 @@ class Staff_Picks_Widget extends WP_Widget {
     $instance['count'] = ( ! empty( $new_instance['count'] ) ) ? strip_tags( intval( $new_instance['count'] ) ) : self::DEFAULT_COUNT;
     $instance['show_link'] = ! empty( $new_instance['show_link'] );
     $instance['link_text'] = ( ! empty( $new_instance['link_text'] ) ) ? strip_tags( $new_instance['link_text'] ) : '';
+    $instance['audience'] = ( ! empty( $new_instance['audience'] ) ) ? strip_tags( intval( $new_instance['audience'] ) ) : -1;
 
     return $instance;
   }
