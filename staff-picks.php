@@ -40,9 +40,6 @@ add_filter('redirect_post_location','staff_picks_fix_status_message');
 add_filter('single_template', 'staff_picks_single_template');
 add_filter('wp_title', 'staff_picks_modify_title');
 
-// shortcode hooks
-add_shortcode('staff_picks_list', 'staff_picks_list_shortcode_handler');
-
 /**
  * Flush rewrite rules on plugin activation
  *
