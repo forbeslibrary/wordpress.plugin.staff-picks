@@ -6,6 +6,8 @@
  * Version: 1.1.1
  * Author: Benjamin Kalish
  * Author URI: https://github.com/bkalish
+ * License: GNU General Public License v2
+ * License URI: http://www.gnu.org/licenses/gpl-2.0.html
  */
 
 require_once(dirname( __FILE__ ) . '/helpers.php');
