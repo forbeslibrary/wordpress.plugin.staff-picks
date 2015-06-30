@@ -229,7 +229,7 @@ function staff_picks_add_glance_items() {
  *
  * @wp-hook pre_insert_term
  */
-function staff_picks_restrict_insert_taxonomy_terms($term, $taxonomy) {
+function staff_picks_restrict_insert_taxonomy_terms($term, $taxonomy=null) {
   if (
     in_array($taxonomy, array(
       'staff_pick_categories',
