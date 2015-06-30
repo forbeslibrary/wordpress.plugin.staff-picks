@@ -298,7 +298,7 @@ function staff_picks_class_names( $classes ) {
       'staff_pick_audiences',
       array('fields' => 'names')
     );
-    $classes = array_merge($classes, array_map(strtolower, $audiences));
+    $classes = array_merge($classes, array_map('strtolower', $audiences));
   }
 
   if (is_tax()) {
