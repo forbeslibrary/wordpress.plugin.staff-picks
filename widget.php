@@ -54,13 +54,17 @@ class Staff_Picks_Widget extends WP_Widget {
       ) );
     }
 
-    while ( $my_query->have_posts() ) {
-       $my_query->the_post();
-       if ( has_post_thumbnail() ) : ?>
-         <a href="<?php the_permalink(); ?>">
-           <?php the_post_thumbnail( 'thumbnail', array('class' => 'staff_picks_widget_image') ); ?>
-         </a>
-       <?php endif;
+    if ($my_query->have_posts()) {
+      while ( $my_query->have_posts() ) {
+        $my_query->the_post();
+        if ( has_post_thumbnail() ) : ?>
+          <a href="<?php the_permalink(); ?>">
+            <?php the_post_thumbnail( 'thumbnail', array('class' => 'staff_picks_widget_image') ); ?>
+          </a>
+        <?php endif;
+      }
+    } else {
+      echo __('No matching Staff Picks to show.');
     }
     wp_reset_postdata();
     if ($instance['show_link']): ?>
