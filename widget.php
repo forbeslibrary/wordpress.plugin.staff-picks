@@ -120,7 +120,7 @@ class Staff_Picks_Widget extends WP_Widget {
           <option value="-1" <?php selected($audience, -1); ?>>
             <?php _e('All'); ?>
           </option>
-          <?php foreach( get_terms('staff_pick_audiences') as $term ): ?>
+          <?php foreach( get_terms('staff_pick_audiences', array('hide_empty' => false)) as $term ): ?>
             <option value="<?php echo $term->term_id; ?>" <?php selected($audience, $term->term_id); ?>>
               <?php echo $term->name; ?>
             </option>
