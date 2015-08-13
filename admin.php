@@ -3,6 +3,19 @@
  * Admin interface for the Forbes staff_picks plugin.
  */
 
+// admin only action hooks
+add_action('admin_head', 'staff_picks_admin_css');
+add_action('admin_notices', 'staff_picks_admin_notice');
+add_action('dashboard_glance_items', 'staff_picks_add_glance_items');
+add_action('edit_form_after_title', 'staff_picks_editbox_metadata');
+add_action('manage_staff_picks_posts_custom_column', 'staff_picks_custom_columns');
+add_action('pre_insert_term', 'staff_picks_restrict_insert_taxonomy_terms');
+add_action('save_post', 'staff_picks_validate_and_save');
+
+add_filter('manage_staff_picks_posts_columns', 'staff_picks_manage_columns');
+add_filter('redirect_post_location','staff_picks_fix_status_message');
+
+
 /**
 * Save custom fields from staff_picks edit page.
 *
