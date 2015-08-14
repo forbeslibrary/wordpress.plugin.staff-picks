@@ -53,7 +53,7 @@ class Staff_Picks_Plugin {
    */
   function flush_rewrites() {
     $this->init();
-    $this->flush_rewrite_rules();
+    flush_rewrite_rules();
   }
 
 
