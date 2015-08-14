@@ -35,15 +35,15 @@ class Staff_Picks_Plugin {
     register_activation_hook(__FILE__, array($this, 'flush_rewrites'));
 
     // action hooks
-    add_filter('body_class', array($this, 'class_names'));
     add_action('init', array($this, 'init'));
     add_action('widgets_init', array($this, 'register_widgets'));
-    add_action('wp_head', array($this, 'public_css'));
+    add_action('wp_head', array($this, 'output_public_css'));
 
     // filter hooks
-    add_filter('archive_template', array($this, 'archive_template'));
-    add_filter('single_template', array($this, 'single_template'));
-    add_filter('wp_title', array($this, 'modify_title'));
+    add_filter('body_class', array($this, 'filter_body_class_names'));
+    add_filter('archive_template', array($this, 'filter_archive_template'));
+    add_filter('single_template', array($this, 'filter_single_template'));
+    add_filter('wp_title', array($this, 'filter_page_title'));
   }
 
   /**
@@ -172,11 +172,11 @@ class Staff_Picks_Plugin {
   }
 
   /**
-   * Adds custom CSS to public pages.
+   * Ouputs css to be used on public pages for this plugin
    *
    * @wp-hook wp_head
    */
-  function public_css() {
+  function output_public_css() {
     ?>
     <style>
       .staff_picks {
@@ -234,11 +234,14 @@ class Staff_Picks_Plugin {
   }
 
   /**
-   * Use a special template for showing a single staff pick on a page.
+   * Return the template file used to display a single post
+   *
+   * This is a filter. The current template is passed as an argument and is
+   * modified if neccessary.
    *
    * @wp-hook single_template
    */
-  function single_template($template){
+  function filter_single_template($template){
     global $post;
 
     if ($post->post_type == 'staff_picks') {
@@ -248,11 +251,14 @@ class Staff_Picks_Plugin {
   }
 
   /**
-   * Use a special template for showing a staff pick archive pages
+   * Return the template file used to display archive pages
    *
-   * @wp-hook single_template
+   * This is a filter. The current template is passed as an argument and is
+   * modified if neccessary.
+   *
+   * @wp-hook archive_template
    */
-  function archive_template($template){
+  function filter_archive_template($template){
     global $post;
 
     if (is_post_type_archive('staff_picks')
@@ -267,14 +273,17 @@ class Staff_Picks_Plugin {
   }
 
   /**
-   * Modifies the title.
+   * Modifies the page title
+   *
+   * This is a filter. The current title is passed as an argument and is
+   * modified if neccesary.
    *
    * @wp-hook wp_title
    */
-  function modify_title($title) {
+  function filter_page_title($title) {
     if (staff_picks_get_title()) {
       $title = staff_picks_get_title();
-      $blog_title = get_bloginfo( 'name' );
+      // $blog_title = get_bloginfo( 'name' );
       return "$title";
     }
     return $title;
@@ -290,10 +299,14 @@ class Staff_Picks_Plugin {
   }
 
   /**
-   * Addes a classname to the body by audience, for easier css styling
+   * Returns an array of strings to be used as classes for the body tag of the current page
+   *
+   * This is a filter. The current array of class names is passed as an argument.
+   * This method adds the audience term, if applicable, for easier css styling.
+   *
    * wp-hook body-class
    */
-  function class_names( $classes ) {
+  function filter_body_class_names( $classes ) {
     global $wp_query;
 
     if (is_single()) {
