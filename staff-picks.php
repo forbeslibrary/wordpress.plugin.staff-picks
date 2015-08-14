@@ -52,8 +52,8 @@ class Staff_Picks_Plugin {
    * This is registered with register_activation_hook for this file
    */
   function flush_rewrites() {
-    staff_picks_init();
-    flush_rewrite_rules();
+    $this->init();
+    $this->flush_rewrite_rules();
   }
 
 
