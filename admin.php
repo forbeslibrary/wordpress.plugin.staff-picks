@@ -11,6 +11,8 @@ add_action('edit_form_after_title', 'staff_picks_editbox_metadata');
 add_action('manage_staff_picks_posts_custom_column', 'staff_picks_custom_columns');
 add_action('pre_insert_term', 'staff_picks_restrict_insert_taxonomy_terms');
 add_action('save_post', 'staff_picks_validate_and_save');
+add_action('add_meta_boxes', 'staff_picks_modify_metaboxes');
+
 
 add_filter('manage_staff_picks_posts_columns', 'staff_picks_manage_columns');
 add_filter('redirect_post_location','staff_picks_fix_status_message');
