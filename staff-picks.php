@@ -11,6 +11,15 @@
  */
 
 class Staff_Picks_Plugin {
+  // The post type (plural), in Upper_Case_With_Underscores
+  const POST_TYPE_UPPER = 'Staff_Picks';
+
+  // The post type (plural), in lower_case_with_underscores
+  const POST_TYPE = 'staff_picks';
+
+  // The post type (singular), in lower_case_with_underscores
+  const POST_TYPE_SINGULAR = 'staff_pick';
+
   public function __construct() {
     $this->load_dependencies();
     $this->add_hooks();
@@ -58,7 +67,7 @@ class Staff_Picks_Plugin {
 
 
   /**
-   * Registers the custom post type staff_picks and the custom taxonomies.
+   * Registers the custom post type (self::POST_TYPE) and the custom taxonomies.
    *
    * @wp-hook init
    */
@@ -92,7 +101,7 @@ class Staff_Picks_Plugin {
       'supports' => array('title','editor','revisions','thumbnail')
     );
 
-    register_post_type( 'staff_picks' , $args );
+    register_post_type( self::POST_TYPE, $args );
 
     // We will register several taxonomies with the same capabilities
     $taxonomy_capabilities = array(
@@ -103,8 +112,8 @@ class Staff_Picks_Plugin {
     );
 
     register_taxonomy(
-      'staff_pick_audiences',
-      'staff_picks',
+      self::POST_TYPE_SINGULAR . '_audiences',
+      self::POST_TYPE,
       array(
         'label' => 'Audiences',
         'labels' => array(
@@ -120,8 +129,8 @@ class Staff_Picks_Plugin {
     );
 
     register_taxonomy(
-      'staff_pick_formats',
-      'staff_picks',
+      self::POST_TYPE_SINGULAR . '_formats',
+      self::POST_TYPE,
       array(
         'label' => 'Formats',
         'labels' => array(
@@ -137,8 +146,8 @@ class Staff_Picks_Plugin {
     );
 
     register_taxonomy(
-      'staff_pick_reviewers',
-      'staff_picks',
+      self::POST_TYPE_SINGULAR . '_reviewers',
+      self::POST_TYPE,
       array(
         'label' => 'Reviewers',
         'labels' => array(
@@ -154,8 +163,8 @@ class Staff_Picks_Plugin {
     );
 
     register_taxonomy(
-      'staff_pick_categories',
-      'staff_picks',
+      self::POST_TYPE_SINGULAR . '_categories',
+      self::POST_TYPE,
       array(
         'label' => 'Categories',
         'labels' => array(
@@ -244,7 +253,7 @@ class Staff_Picks_Plugin {
   function filter_single_template($template){
     global $post;
 
-    if ($post->post_type == 'staff_picks') {
+    if ($post->post_type == self::POST_TYPE) {
        $template = dirname( __FILE__ ) . '/single-staff-pick.php';
     }
     return $template;
@@ -261,11 +270,11 @@ class Staff_Picks_Plugin {
   function filter_archive_template($template){
     global $post;
 
-    if (is_post_type_archive('staff_picks')
-      or is_tax('staff_pick_categories')
-      or is_tax('staff_pick_audiences')
-      or is_tax('staff_pick_formats')
-      or is_tax('staff_pick_reviewers')
+    if (is_post_type_archive(self::POST_TYPE)
+      or is_tax(self::POST_TYPE_SINGULAR . '_categories')
+      or is_tax(self::POST_TYPE_SINGULAR . '_audiences')
+      or is_tax(self::POST_TYPE_SINGULAR . '_formats')
+      or is_tax(self::POST_TYPE_SINGULAR . '_reviewers')
     ) {
        $template = dirname( __FILE__ ) . '/archive-staff-pick.php';
     }
@@ -295,7 +304,7 @@ class Staff_Picks_Plugin {
    * @wp-hook widgets_init
    */
   function register_widgets() {
-    register_widget( 'Staff_Picks_Widget' );
+    register_widget( self::POST_TYPE_UPPER . '_Widget' );
   }
 
   /**
@@ -329,5 +338,5 @@ class Staff_Picks_Plugin {
   }
 }
 
-// create a Staff_Picks_Plugin instance to load the plugin
+// create a plugin instance to load the plugin
 new Staff_Picks_Plugin();
