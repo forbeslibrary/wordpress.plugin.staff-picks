@@ -3,6 +3,15 @@
  * Admin interface for the Forbes staff_picks plugin.
  */
 class Staff_Picks_Admin {
+  // The post type (plural), in Upper_Case_With_Underscores
+  const POST_TYPE_UPPER = 'Staff_Picks';
+
+  // The post type (plural), in lower_case_with_underscores
+  const POST_TYPE = 'staff_picks';
+
+  // The post type (singular), in lower_case_with_underscores
+  const POST_TYPE_SINGULAR = 'staff_pick';
+
   public function __construct() {
     $this->add_hooks();
   }
@@ -13,12 +22,12 @@ class Staff_Picks_Admin {
     add_action('admin_notices', array($this, 'admin_notice'));
     add_action('dashboard_glance_items', array($this, 'add_glance_items'));
     add_action('edit_form_after_title', array($this, 'editbox_metadata'));
-    add_action('manage_staff_picks_posts_custom_column', array($this, 'custom_columns'));
+    add_action('manage_' . self::POST_TYPE . '_posts_custom_column', array($this, 'custom_columns'));
     add_action('pre_insert_term', array($this, 'restrict_insert_taxonomy_terms'));
     add_action('save_post', array($this, 'validate_and_save'));
     add_action('add_meta_boxes', array($this, 'modify_metaboxes'));
 
-    add_filter('manage_staff_picks_posts_columns', array($this, 'manage_columns'));
+    add_filter('manage_' . self::POST_TYPE . '_posts_columns', array($this, 'manage_columns'));
     add_filter('redirect_post_location', array($this, 'fix_status_message'));
   }
 
@@ -30,13 +39,15 @@ class Staff_Picks_Admin {
   public function validate_and_save( $post_id ){
     $post =  get_post( $post_id );
 
-    if ( $post->post_type != 'staff_picks' ) {
+    if ( $post->post_type != self::POST_TYPE ) {
      return;
     }
 
+    $metadata_field_name = self::POST_TYPE_SINGULAR . '_metadata';
+
     // Update custom field
-    if (isset($_POST['staff_pick_metadata'])) {
-      update_post_meta($post->ID, 'staff_pick_metadata', $_POST['staff_pick_metadata']);
+    if (isset($_POST[$metadata_field_name])) {
+      update_post_meta($post->ID, $metadata_field_name, $_POST[$metadata_field_name]);
     }
 
     // Stop interfering if this is a draft or the post is being deleted
@@ -50,8 +61,8 @@ class Staff_Picks_Admin {
     // Validation
     $errors = array();
 
-    if (isset($_POST['staff_pick_metadata'])) {
-      $metadata = $_POST['staff_pick_metadata'];
+    if (isset($_POST[$metadata_field_name])) {
+      $metadata = $_POST[$metadata_field_name];
 
       if (isset($metadata['catalog_url'])) {
         if (trim($metadata['catalog_url']) == false) {
@@ -62,17 +73,20 @@ class Staff_Picks_Admin {
       }
     }
 
-    if ( !get_the_terms( $post->ID, 'staff_pick_reviewers' ) ) {
+    $taxonomy = self::POST_TYPE_SINGULAR . '_reviewers';
+    if ( !get_the_terms( $post->ID, $taxonomy ) ) {
       $errors[] = __('You must choose a reviewer');
-    } elseif ( count(get_the_terms( $post->ID, 'staff_pick_reviewers' )) > 1 ) {
+    } elseif ( count(get_the_terms( $post->ID, $taxonomy )) > 1 ) {
       $errors[] = __('You may only choose one reviewer');
     }
 
-    if ( !get_the_terms( $post->ID, 'staff_pick_audiences' ) ) {
+    $taxonomy = self::POST_TYPE_SINGULAR . '_audiences';
+    if ( !get_the_terms( $post->ID, $taxonomy ) ) {
       $errors[] = __('You must choose at least one audience');
     }
 
-    if ( !get_the_terms( $post->ID, 'staff_pick_formats' ) ) {
+    $taxonomy = self::POST_TYPE_SINGULAR . '_formats';
+    if ( !get_the_terms( $post->ID, $taxonomy ) ) {
       $errors[] = __('You must choose at least one format');
     }
 
@@ -82,10 +96,10 @@ class Staff_Picks_Admin {
 
     if ($errors) {
       // Save the errors using the transients api
-      set_transient( "staff_picks_errors_{$post->ID}", $errors, 120 );
+      set_transient( self::POST_TYPE . "_errors_{$post->ID}", $errors, 120 );
 
       // we must remove this action or it will loop for ever
-      remove_action('save_post', 'staff_picks_validate_and_save');
+      remove_action('save_post', self::POST_TYPE . '_validate_and_save');
 
       // Change post from published to draft
       $post->post_status = 'draft';
@@ -94,7 +108,7 @@ class Staff_Picks_Admin {
       wp_update_post( $post );
 
       // we must add back this action
-      add_action('save_post', 'staff_picks_validate_and_save');
+      add_action('save_post', self::POST_TYPE . '_validate_and_save');
     }
 
   }
@@ -110,7 +124,7 @@ class Staff_Picks_Admin {
   */
   public function fix_status_message($location, $post_id) {
     //If any staff pick errors have been queued...
-    if (get_transient( "staff_picks_errors_{$post->ID}" )){
+    if (get_transient( self::POST_TYPE . "_errors_{$post->ID}" )){
       $status = get_post_status( $post_id );
       $location = add_query_arg('message', 10, $location);
     }
@@ -126,15 +140,15 @@ class Staff_Picks_Admin {
   public function admin_css() {
     ?>
     <style>
-      .staff-picks-metadata-label {
+      .<?php echo self::POST_TYPE; ?>-metadata-label {
         display: block;
       }
-      .staff-picks-metadata-input {
+      .<?php echo self::POST_TYPE; ?>-metadata-input {
         display: block;
         width: 100%;
       }
-      #dashboard_right_now .staff_picks-count a:before,
-      #dashboard_right_now .staff_picks-count span:before {
+      #dashboard_right_now .<?php echo self::POST_TYPE; ?>-count a:before,
+      #dashboard_right_now .<?php echo self::POST_TYPE; ?>-count span:before {
         content: "\f331";
       }
     </style>
@@ -149,9 +163,9 @@ class Staff_Picks_Admin {
    * @wp-hook add_meta_boxes
    */
   public function modify_metaboxes() {
-    remove_meta_box('wii_post-box2', 'staff_picks', 'normal');
-    remove_meta_box( 'postimagediv', 'staff_picks', 'side' );
-    add_meta_box( 'postimagediv', __('Cover Image'), 'post_thumbnail_meta_box', 'staff_picks', 'side', 'high' );
+    remove_meta_box('wii_post-box2', self::POST_TYPE, 'normal');
+    remove_meta_box( 'postimagediv', self::POST_TYPE , 'side' );
+    add_meta_box( 'postimagediv', __('Cover Image'), 'post_thumbnail_meta_box', self::POST_TYPE, 'side', 'high' );
   }
 
 
@@ -167,7 +181,7 @@ class Staff_Picks_Admin {
       return;
     }
 
-    $errors = get_transient( "staff_picks_errors_{$post->ID}" );
+    $errors = get_transient( self::POST_TYPE . "_errors_{$post->ID}" );
     if ($errors) {
       foreach ($errors as $error): ?>
         <div class="error">
@@ -176,42 +190,42 @@ class Staff_Picks_Admin {
         <?php
       endforeach;
     }
-    delete_transient( "staff_picks_errors_{$post->ID}" );
+    delete_transient( self::POST_TYPE . "_errors_{$post->ID}" );
   }
 
   /**
-   * Outputs the contents of each custom column on the staff_picks admin page.
+   * Outputs the contents of each custom column on the admin page.
    *
-   * @wp-hook manage_staff_picks_posts_custom_column
+   * @wp-hook manage_{post_type}_posts_custom_column
    */
   public function custom_columns($column){
     global $post;
     $custom = get_post_custom($post->ID);
-    if (isset($custom['staff_pick_metadata'])) {
+    if (isset($custom[self::POST_TYPE_SINGULAR . '_metadata'])) {
       $metadata = maybe_unserialize(
-        $custom['staff_pick_metadata'][0]
+        $custom[self::POST_TYPE_SINGULAR . '_metadata'][0]
       );
     } else {
       $metadata = array();
     }
 
     switch ($column) {
-      case 'staff-picks-author':
+      case self::POST_TYPE . '-author':
         if (isset($metadata['author'])) {
           echo $metadata['author'];
         }
         break;
-      case 'staff-picks-formats':
-        echo implode(', ', wp_get_post_terms($post->ID, 'staff_pick_formats', array('fields' => 'names')));
+      case self::POST_TYPE_SINGULAR . '_formats':
+        echo implode(', ', wp_get_post_terms($post->ID, self::POST_TYPE_SINGULAR . '_formats', array('fields' => 'names')));
         break;
-      case 'staff-picks-reviewers':
-        echo implode(', ', wp_get_post_terms($post->ID, 'staff_pick_reviewers', array('fields' => 'names')));
+      case self::POST_TYPE_SINGULAR . '_reviewers':
+        echo implode(', ', wp_get_post_terms($post->ID, self::POST_TYPE_SINGULAR . '_reviewers', array('fields' => 'names')));
         break;
-      case 'staff-picks-audiences':
-        echo implode(', ', wp_get_post_terms($post->ID, 'staff_pick_audiences', array('fields' => 'names')));
+      case self::POST_TYPE_SINGULAR . '_audiences':
+        echo implode(', ', wp_get_post_terms($post->ID, self::POST_TYPE_SINGULAR . '_audiences', array('fields' => 'names')));
         break;
-      case 'staff-picks-categories':
-        echo implode(', ', wp_get_post_terms($post->ID, 'staff_pick_categories', array('fields' => 'names')));
+      case self::POST_TYPE_SINGULAR . '_categories':
+        echo implode(', ', wp_get_post_terms($post->ID, self::POST_TYPE_SINGULAR . '_categories', array('fields' => 'names')));
         break;
     }
   }
@@ -224,11 +238,11 @@ class Staff_Picks_Admin {
   public function manage_columns($columns){
     $columns = array_merge( $columns, array(
       'title' => 'Title',
-      'staff-picks-author' => 'Author',
-      'staff-picks-reviewers' => 'Reviewer',
-      'staff-picks-formats' => 'Format',
-      'staff-picks-audiences' => 'Audience',
-      'staff-picks-categories' => 'Categories',
+      self::POST_TYPE_SINGULAR . '_author' => 'Author',
+      self::POST_TYPE_SINGULAR . '_reviewers' => 'Reviewer',
+      self::POST_TYPE_SINGULAR . '_formats' => 'Format',
+      self::POST_TYPE_SINGULAR . '_audiences' => 'Audience',
+      self::POST_TYPE_SINGULAR . '_categories' => 'Categories',
     ));
 
     return $columns;
@@ -240,11 +254,11 @@ class Staff_Picks_Admin {
    * @wp-hook dashboard_glance_items
    */
   public function add_glance_items() {
-    $pt_info = get_post_type_object('staff_picks');
-    $num_posts = wp_count_posts('staff_picks');
+    $pt_info = get_post_type_object(self::POST_TYPE);
+    $num_posts = wp_count_posts(self::POST_TYPE);
     $num = number_format_i18n($num_posts->publish);
     $text = _n( $pt_info->labels->singular_name, $pt_info->labels->name, intval($num_posts->publish) ); // singular/plural text label
-    echo '<li class="page-count '.$pt_info->name.'-count"><a href="edit.php?post_type=staff_picks">'.$num.' '.$text.'</li>';
+    echo '<li class="page-count ' . $pt_info->name . '-count"><a href="edit.php?post_type=' . self::POST_TYPE . '">' . $num . ' ' . $text . '</li>';
   }
 
   /**
@@ -286,18 +300,18 @@ class Staff_Picks_Admin {
     }
     ?>
     <label>
-      <span class="staff-picks-metadata-label">Author</span>
+      <span class="staff_picks-metadata-label">Author</span>
       <input
         name="staff_pick_metadata[author]"
-        class="staff-picks-metadata-input"
+        class="staff_picks-metadata-input"
         value="<?php echo $staff_pick_metadata['author']; ?>"
       />
     </label>
     <label>
-      <span class="staff-picks-metadata-label">Catalog URL</span>
+      <span class="staff_picks-metadata-label">Catalog URL</span>
       <input
         name="staff_pick_metadata[catalog_url]"
-        class="staff-picks-metadata-input"
+        class="staff_picks-metadata-input"
         value="<?php echo $staff_pick_metadata['catalog_url']; ?>"
       />
     </label><?php
