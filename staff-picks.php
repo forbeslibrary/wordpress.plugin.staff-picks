@@ -72,36 +72,10 @@ class Staff_Picks_Plugin {
    * @wp-hook init
    */
   function init() {
-    $labels = array(
-      'name' => _x('Staff Picks', 'post type general name'),
-      'singular_name' => _x('Staff Pick', 'post type singular name'),
-      'add_new' => _x('Add New', 'portfolio item'),
-      'add_new_item' => __('Add New Staff Pick'),
-      'edit_item' => __('Edit Staff Pick'),
-      'new_item' => __('New Staff Pick'),
-      'view_item' => __('View Staff Pick'),
-      'search_items' => __('Search Staff Picks'),
-      'not_found' =>  __('Nothing found'),
-      'not_found_in_trash' => __('Nothing found in Trash'),
-      'parent_item_colon' => ''
-    );
+    $data_file = file_get_contents(dirname( __FILE__ ) . '/post-type-data.json');
+    $data = json_decode($data_file, true);
 
-    $args = array(
-      'labels' => $labels,
-      'public' => true,
-      'publicly_queryable' => true,
-      'show_ui' => true,
-      'query_var' => true,
-      'rewrite' =>  array('with_front' => False),
-      'capability_type' => 'post',
-      'has_archive' => true,
-      'hierarchical' => false,
-      'menu_icon' => 'dashicons-book-alt',
-      'menu_position' => 5, // admin menu appears after Posts but before Media
-      'supports' => array('title','editor','revisions','thumbnail')
-    );
-
-    register_post_type( self::POST_TYPE, $args );
+    register_post_type( $data['post_type'], $data['post_type_data'] );
 
     // We will register several taxonomies with the same capabilities
     $taxonomy_capabilities = array(
@@ -111,7 +85,15 @@ class Staff_Picks_Plugin {
       'assign_terms' => 'edit_posts'  // means administrator', 'editor', 'author', 'contributor'
     );
 
-    register_taxonomy(
+    foreach( $data['taxonomies'] as $taxonomy ) {
+      register_taxonomy(
+        $taxonomy['taxonomy_name'],
+        $data['post_type'],
+        array_merge($taxonomy_capabilities, $taxonomy['taxonomy_data'])
+      );
+    }
+
+    /*register_taxonomy(
       self::POST_TYPE_SINGULAR . '_audiences',
       self::POST_TYPE,
       array(
@@ -126,7 +108,7 @@ class Staff_Picks_Plugin {
         'rewrite' => array('with_front' => False),
         'capabilities' => $taxonomy_capabilities
       )
-    );
+    );*/
 
     register_taxonomy(
       self::POST_TYPE_SINGULAR . '_formats',

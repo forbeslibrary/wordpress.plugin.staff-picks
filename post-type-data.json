@@ -1,0 +1,54 @@
+{
+  "post_type": "staff_picks",
+  "post_type_data": {
+    "labels": {
+      "name": "Staff Picks",
+      "singular_name": "Staff Pick",
+      "add_new": "Add New",
+      "add_new_item": "Add New Staff Pick",
+      "edit_item": "Edit Staff Pick",
+      "new_item": "New Staff Pick",
+      "view_item": "View Staff Pick",
+      "search_items": "Search Staff Picks",
+      "not_found": "Nothing found",
+      "not_found_in_trash": "Nothing found in Trash",
+      "parent_item_colon": ""
+    },
+    "public": true,
+    "publicly_queryable": true,
+    "show_ui": true,
+    "query_var": true,
+    "rewrite": {
+      "with_front": false
+    },
+    "capability_type": "post",
+    "has_archive": true,
+    "hierarchical": false,
+    "menu_icon": "dashicons-book-alt",
+    "menu_position": 5,
+    "supports": [
+      "title",
+      "editor",
+      "revisions",
+      "thumbnail"
+    ]
+  },
+  "taxonomies": [
+    {
+      "taxonomy_name": "staff_pick_audiences",
+      "taxonomy_data": {
+        "label": "Audiences",
+        "labels": {
+          "singular_label": "Audience",
+          "add_new_item": "Add New Audience",
+          "edit_item": "Edit Audience"
+        },
+        "hierarchical": true,
+        "show_ui": true,
+        "rewrite": {
+          "with_front": false
+        }
+      }
+    }
+  ]
+}
