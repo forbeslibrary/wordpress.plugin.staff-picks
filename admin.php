@@ -32,7 +32,7 @@ class Staff_Picks_Admin {
   }
 
   /**
-  * Save custom fields from staff_picks edit page.
+  * Save custom fields from {$post_type} edit page.
   *
   * @wp-hook save_post
   */
@@ -196,7 +196,7 @@ class Staff_Picks_Admin {
   /**
    * Outputs the contents of each custom column on the admin page.
    *
-   * @wp-hook manage_{post_type}_posts_custom_column
+   * @wp-hook manage_{$post_type}_posts_custom_column
    */
   public function custom_columns($column){
     global $post;
@@ -231,9 +231,9 @@ class Staff_Picks_Admin {
   }
 
   /**
-   * Customizes the columns on the staff_picks admin page.
+   * Customizes the columns on the {$post_type} admin page.
    *
-   * @wp-hook manage_staff_picks_posts_columns
+   * @wp-hook manage_{$post_type}_posts_columns
    */
   public function manage_columns($columns){
     $columns = array_merge( $columns, array(
@@ -249,7 +249,7 @@ class Staff_Picks_Admin {
   }
 
   /**
-   * Add information about staff_picks to the glance items.
+   * Add information about {$post_type} to the glance items.
    *
    * @wp-hook dashboard_glance_items
    */
