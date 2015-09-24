@@ -97,60 +97,9 @@ class Staff_Picks_Plugin {
    * @wp-hook wp_head
    */
   function output_public_css() {
-    ?>
-    <style>
-      .staff_picks {
-        clear: both;
-      }
-      .staff_picks_format {
-        font-size:smaller;
-      }
-      .staff_picks_format a {
-        color: inherit;
-      }
-      .staff_picks_byline {
-        font-style: italic;
-      }
-      .staff_picks_byline:before {
-        content: " — ";
-      }
-      .book-jacket, #content .book-jacket-caption .book-jacket {
-        max-width: 200px;
-      }
-      .book-jacket-caption {
-        clear: left;
-        float: left;
-        margin-bottom: 1em;
-        margin-right: 1em;
-      }
-      @media (max-width: 600px) {
-        .book-jacket-caption, #content .book-jacket-caption .book-jacket-caption {
-          clear: both;
-          float: none;
-          display: block;
-          margin-bottom: 1em;
-          margin-right: 1em;
-        }
-        .book-jacket, #content .book-jacket-caption .book-jacket {
-          float: none;
-          clear: both;
-          margin: 0 auto 1em;
-        }
-      }
-      .staff_picks_widget_image {
-        border-radius: 1em;
-        width: 48%;
-        vertical-align: middle;
-        margin: 1px 1% 1px 0;
-      }
-      .staff_picks_widget_link {
-        text-align: center;
-        font-weight: bold;
-        font-size: larger;
-        padding: 0.5em;
-      }
-    </style>
-    <?php
+    echo '<style>';
+    readfile(dirname( __FILE__ ) . '/css/public.css');
+    echo '</style>';
   }
 
   /**
