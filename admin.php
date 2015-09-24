@@ -13,6 +13,12 @@ class Staff_Picks_Admin {
   const POST_TYPE_SINGULAR = 'staff_pick';
 
   public function __construct() {
+    $data_file = file_get_contents(dirname( __FILE__ ) . '/post-type-data.json');
+    $this->data = json_decode($data_file, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+      trigger_error('Could not parse invalid JSON');
+    }
+
     $this->add_hooks();
   }
 
@@ -22,12 +28,12 @@ class Staff_Picks_Admin {
     add_action('admin_notices', array($this, 'admin_notice'));
     add_action('dashboard_glance_items', array($this, 'add_glance_items'));
     add_action('edit_form_after_title', array($this, 'editbox_metadata'));
-    add_action('manage_' . self::POST_TYPE . '_posts_custom_column', array($this, 'custom_columns'));
+    add_action("manage_{$this->data['post_type']}_posts_custom_column", array($this, 'custom_columns'));
     add_action('pre_insert_term', array($this, 'restrict_insert_taxonomy_terms'));
     add_action('save_post', array($this, 'validate_and_save'));
     add_action('add_meta_boxes', array($this, 'modify_metaboxes'));
 
-    add_filter('manage_' . self::POST_TYPE . '_posts_columns', array($this, 'manage_columns'));
+    add_filter("manage_{$this->data['post_type']}_posts_columns", array($this, 'manage_columns'));
     add_filter('redirect_post_location', array($this, 'fix_status_message'));
   }
 
@@ -39,11 +45,11 @@ class Staff_Picks_Admin {
   public function validate_and_save( $post_id ){
     $post =  get_post( $post_id );
 
-    if ( $post->post_type != self::POST_TYPE ) {
+    if ( $post->post_type != $this->data['post_type'] ) {
      return;
     }
 
-    $metadata_field_name = self::POST_TYPE_SINGULAR . '_metadata';
+    $metadata_field_name = $this->data['post_type'] . '_metadata';
 
     // Update custom field
     if (isset($_POST[$metadata_field_name])) {
@@ -73,21 +79,15 @@ class Staff_Picks_Admin {
       }
     }
 
-    $taxonomy = self::POST_TYPE_SINGULAR . '_reviewers';
-    if ( !get_the_terms( $post->ID, $taxonomy ) ) {
-      $errors[] = __('You must choose a reviewer');
-    } elseif ( count(get_the_terms( $post->ID, $taxonomy )) > 1 ) {
-      $errors[] = __('You may only choose one reviewer');
-    }
-
-    $taxonomy = self::POST_TYPE_SINGULAR . '_audiences';
-    if ( !get_the_terms( $post->ID, $taxonomy ) ) {
-      $errors[] = __('You must choose at least one audience');
-    }
-
-    $taxonomy = self::POST_TYPE_SINGULAR . '_formats';
-    if ( !get_the_terms( $post->ID, $taxonomy ) ) {
-      $errors[] = __('You must choose at least one format');
+    foreach( $this->data['taxonomies'] as $taxonomy ) {
+      $singular_name = $taxonomy['taxonomy_data']['labels']['singular_label'];
+      $terms = get_the_terms( $post->ID, $taxonomy['taxonomy_name'] );
+      if ($taxonomy['required'] and !$terms) {
+        $errors[] = __("{$singular_name} is required");
+      }
+      if ($taxonomy['allow_multiple'] == false and count($terms) > 1) {
+        $errors[] = __("You may only choose one {$singular_name}");
+      }
     }
 
     if ( !has_post_thumbnail( $post->ID ) ) {
@@ -96,10 +96,10 @@ class Staff_Picks_Admin {
 
     if ($errors) {
       // Save the errors using the transients api
-      set_transient( self::POST_TYPE . "_errors_{$post->ID}", $errors, 120 );
+      set_transient( $this->data['post_type'] . "_errors_{$post->ID}", $errors, 120 );
 
       // we must remove this action or it will loop for ever
-      remove_action('save_post', self::POST_TYPE . '_validate_and_save');
+      remove_action('save_post', $this->data['post_type'] . '_validate_and_save');
 
       // Change post from published to draft
       $post->post_status = 'draft';
@@ -108,7 +108,7 @@ class Staff_Picks_Admin {
       wp_update_post( $post );
 
       // we must add back this action
-      add_action('save_post', self::POST_TYPE . '_validate_and_save');
+      add_action('save_post', $this->data['post_type'] . '_validate_and_save');
     }
 
   }
@@ -120,11 +120,13 @@ class Staff_Picks_Admin {
   * we have changed the status to draft during validation. This fixes that by
   * modifying the message if any errors have been queued.
   *
+  * FIX ME. Currently broken!
+  *
   * @wp-hook redirect_post_location
   */
   public function fix_status_message($location, $post_id) {
     //If any staff pick errors have been queued...
-    if (get_transient( self::POST_TYPE . "_errors_{$post->ID}" )){
+    if (get_transient( $this->data['post_type'] . "_errors_{$post->ID}" )){
       $status = get_post_status( $post_id );
       $location = add_query_arg('message', 10, $location);
     }
@@ -138,21 +140,9 @@ class Staff_Picks_Admin {
   * @wp-hook admin_head
   */
   public function admin_css() {
-    ?>
-    <style>
-      .<?php echo self::POST_TYPE; ?>-metadata-label {
-        display: block;
-      }
-      .<?php echo self::POST_TYPE; ?>-metadata-input {
-        display: block;
-        width: 100%;
-      }
-      #dashboard_right_now .<?php echo self::POST_TYPE; ?>-count a:before,
-      #dashboard_right_now .<?php echo self::POST_TYPE; ?>-count span:before {
-        content: "\f331";
-      }
-    </style>
-    <?php
+    echo '<style>';
+    readfile(dirname( __FILE__ ) . '/css/admin.css');
+    echo '</style>';
   }
 
   /**
@@ -163,9 +153,9 @@ class Staff_Picks_Admin {
    * @wp-hook add_meta_boxes
    */
   public function modify_metaboxes() {
-    remove_meta_box('wii_post-box2', self::POST_TYPE, 'normal');
-    remove_meta_box( 'postimagediv', self::POST_TYPE , 'side' );
-    add_meta_box( 'postimagediv', __('Cover Image'), 'post_thumbnail_meta_box', self::POST_TYPE, 'side', 'high' );
+    remove_meta_box('wii_post-box2', $this->data['post_type'], 'normal');
+    remove_meta_box( 'postimagediv', $this->data['post_type'] , 'side' );
+    add_meta_box( 'postimagediv', __('Cover Image'), 'post_thumbnail_meta_box', $this->data['post_type'], 'side', 'high' );
   }
 
 
@@ -181,7 +171,7 @@ class Staff_Picks_Admin {
       return;
     }
 
-    $errors = get_transient( self::POST_TYPE . "_errors_{$post->ID}" );
+    $errors = get_transient( $this->data['post_type'] . "_errors_{$post->ID}" );
     if ($errors) {
       foreach ($errors as $error): ?>
         <div class="error">
@@ -190,7 +180,7 @@ class Staff_Picks_Admin {
         <?php
       endforeach;
     }
-    delete_transient( self::POST_TYPE . "_errors_{$post->ID}" );
+    delete_transient( $this->data['post_type'] . "_errors_{$post->ID}" );
   }
 
   /**
@@ -210,23 +200,17 @@ class Staff_Picks_Admin {
     }
 
     switch ($column) {
-      case self::POST_TYPE . '-author':
+      case $this->data['post_type'] . '_author':
         if (isset($metadata['author'])) {
           echo $metadata['author'];
         }
         break;
-      case self::POST_TYPE_SINGULAR . '_formats':
-        echo implode(', ', wp_get_post_terms($post->ID, self::POST_TYPE_SINGULAR . '_formats', array('fields' => 'names')));
-        break;
-      case self::POST_TYPE_SINGULAR . '_reviewers':
-        echo implode(', ', wp_get_post_terms($post->ID, self::POST_TYPE_SINGULAR . '_reviewers', array('fields' => 'names')));
-        break;
-      case self::POST_TYPE_SINGULAR . '_audiences':
-        echo implode(', ', wp_get_post_terms($post->ID, self::POST_TYPE_SINGULAR . '_audiences', array('fields' => 'names')));
-        break;
-      case self::POST_TYPE_SINGULAR . '_categories':
-        echo implode(', ', wp_get_post_terms($post->ID, self::POST_TYPE_SINGULAR . '_categories', array('fields' => 'names')));
-        break;
+    }
+
+    foreach( $this->data['taxonomies'] as $taxonomy ) {
+      if ($column == $taxonomy['taxonomy_name']) {
+        echo implode(', ', wp_get_post_terms($post->ID, $taxonomy['taxonomy_name'], array('fields' => 'names')));
+      }
     }
   }
 
@@ -236,14 +220,16 @@ class Staff_Picks_Admin {
    * @wp-hook manage_{$post_type}_posts_columns
    */
   public function manage_columns($columns){
-    $columns = array_merge( $columns, array(
+    $custom_columns = array(
       'title' => 'Title',
-      self::POST_TYPE_SINGULAR . '_author' => 'Author',
-      self::POST_TYPE_SINGULAR . '_reviewers' => 'Reviewer',
-      self::POST_TYPE_SINGULAR . '_formats' => 'Format',
-      self::POST_TYPE_SINGULAR . '_audiences' => 'Audience',
-      self::POST_TYPE_SINGULAR . '_categories' => 'Categories',
-    ));
+      $this->data['post_type'] . '_author' => 'Author',
+    );
+
+    foreach( $this->data['taxonomies'] as $taxonomy ) {
+      $custom_columns[$taxonomy['taxonomy_name']] = $taxonomy['taxonomy_data']['labels']['singular_label'];
+    }
+
+    $columns = array_merge( $columns, $custom_columns);
 
     return $columns;
   }
@@ -254,11 +240,11 @@ class Staff_Picks_Admin {
    * @wp-hook dashboard_glance_items
    */
   public function add_glance_items() {
-    $pt_info = get_post_type_object(self::POST_TYPE);
-    $num_posts = wp_count_posts(self::POST_TYPE);
+    $pt_info = get_post_type_object($this->data['post_type']);
+    $num_posts = wp_count_posts($this->data['post_type']);
     $num = number_format_i18n($num_posts->publish);
     $text = _n( $pt_info->labels->singular_name, $pt_info->labels->name, intval($num_posts->publish) ); // singular/plural text label
-    echo '<li class="page-count ' . $pt_info->name . '-count"><a href="edit.php?post_type=' . self::POST_TYPE . '">' . $num . ' ' . $text . '</li>';
+    echo '<li class="page-count ' . $pt_info->name . '-count"><a href="edit.php?post_type=' . $this->data['post_type'] . '">' . $num . ' ' . $text . '</li>';
   }
 
   /**

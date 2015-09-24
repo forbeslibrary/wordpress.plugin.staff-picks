@@ -1,0 +1,11 @@
+.staff_picks-metadata-label {
+  display: block;
+}
+.staff_picks-metadata-input {
+  display: block;
+  width: 100%;
+}
+#dashboard_right_now staff_picks-count a:before,
+#dashboard_right_now staff_picks-count span:before {
+  content: "\f331";
+}

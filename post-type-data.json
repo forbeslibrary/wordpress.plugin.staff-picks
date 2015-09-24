@@ -37,6 +37,8 @@
   "taxonomies": [
     {
       "taxonomy_name": "staff_pick_audiences",
+      "required": true,
+      "allow_multiple": true,
       "taxonomy_data": {
         "label": "Audiences",
         "labels": {
@@ -49,6 +51,8 @@
     },
     {
       "taxonomy_name": "staff_pick_formats",
+      "required": true,
+      "allow_multiple": true,
       "taxonomy_data": {
         "label": "Formats",
         "labels": {
@@ -61,6 +65,8 @@
     },
     {
       "taxonomy_name": "staff_pick_reviewers",
+      "required": true,
+      "allow_multiple": false,
       "taxonomy_data": {
         "label": "Reviewers",
         "labels": {
@@ -73,6 +79,8 @@
     },
     {
       "taxonomy_name": "staff_pick_categories",
+      "required": false,
+      "allow_multiple": true,
       "taxonomy_data": {
         "label": "Categories",
         "labels": {
