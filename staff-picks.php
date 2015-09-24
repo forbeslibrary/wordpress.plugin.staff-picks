@@ -14,6 +14,9 @@ class Staff_Picks_Plugin {
   public function __construct() {
     $data_file = file_get_contents(dirname( __FILE__ ) . '/post-type-data.json');
     $this->data = json_decode($data_file, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+      trigger_error('Could not parse invalid JSON');
+    }
 
     $this->load_dependencies();
     $this->add_hooks();
