@@ -43,11 +43,43 @@
           "add_new_item": "Add New Audience",
           "edit_item": "Edit Audience"
         },
-        "hierarchical": true,
-        "show_ui": true,
-        "rewrite": {
-          "with_front": false
-        }
+        "hierarchical": true
+      }
+    },
+    {
+      "taxonomy_name": "staff_pick_formats",
+      "taxonomy_data": {
+        "label": "Formats",
+        "labels": {
+          "singular_label": "Format",
+          "add_new_item": "Add New Format",
+          "edit_item": "Edit Format"
+        },
+        "hierarchical": true
+      }
+    },
+    {
+      "taxonomy_name": "staff_pick_reviewers",
+      "taxonomy_data": {
+        "label": "Reviewers",
+        "labels": {
+          "singular_label": "Reviewer",
+          "add_new_item": "Add New Reviewer",
+          "edit_item": "Edit Reviewer"
+        },
+        "hierarchical": true
+      }
+    },
+    {
+      "taxonomy_name": "staff_pick_categories",
+      "taxonomy_data": {
+        "label": "Categories",
+        "labels": {
+          "singular_label": "Category",
+          "add_new_item": "Add New Category",
+          "edit_item": "Edit Category"
+        },
+        "hierarchical": false
       }
     }
   ]

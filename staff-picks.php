@@ -77,89 +77,24 @@ class Staff_Picks_Plugin {
 
     register_post_type( $data['post_type'], $data['post_type_data'] );
 
-    // We will register several taxonomies with the same capabilities
-    $taxonomy_capabilities = array(
-      'manage_terms' => 'manage_options', //by default only admin
-      'edit_terms' => 'manage_options',
-      'delete_terms' => 'manage_options',
-      'assign_terms' => 'edit_posts'  // means administrator', 'editor', 'author', 'contributor'
+    $taxonomy_defaults = array(
+      'show_ui' => True,
+      'rewrite' => array('with_front' => False),
+      'capabilities' => array(
+        'manage_terms' => 'manage_options', //by default only admin
+        'edit_terms' => 'manage_options',
+        'delete_terms' => 'manage_options',
+        'assign_terms' => 'edit_posts'  // means administrator', 'editor', 'author', 'contributor'
+      )
     );
 
     foreach( $data['taxonomies'] as $taxonomy ) {
       register_taxonomy(
         $taxonomy['taxonomy_name'],
         $data['post_type'],
-        array_merge($taxonomy_capabilities, $taxonomy['taxonomy_data'])
+        array_merge($taxonomy_defaults, $taxonomy['taxonomy_data'])
       );
     }
-
-    /*register_taxonomy(
-      self::POST_TYPE_SINGULAR . '_audiences',
-      self::POST_TYPE,
-      array(
-        'label' => 'Audiences',
-        'labels' => array(
-          'singular_label' => 'Audience',
-          'add_new_item' => 'Add New Audience',
-          'edit_item' => 'Edit Audience',
-        ),
-        'hierarchical' => True,
-        'show_ui' => True,
-        'rewrite' => array('with_front' => False),
-        'capabilities' => $taxonomy_capabilities
-      )
-    );*/
-
-    register_taxonomy(
-      self::POST_TYPE_SINGULAR . '_formats',
-      self::POST_TYPE,
-      array(
-        'label' => 'Formats',
-        'labels' => array(
-          'singular_label' => 'Format',
-          'add_new_item' => 'Add New Format',
-          'edit_item' => 'Edit Format',
-        ),
-        'hierarchical' => True,
-        'show_ui' => True,
-        'rewrite' => array('with_front' => False),
-        'capabilities' => $taxonomy_capabilities
-      )
-    );
-
-    register_taxonomy(
-      self::POST_TYPE_SINGULAR . '_reviewers',
-      self::POST_TYPE,
-      array(
-        'label' => 'Reviewers',
-        'labels' => array(
-          'singular_label' => 'Reviewer',
-          'add_new_item' => 'Add New Reviewer',
-          'edit_item' => 'Edit Reviewer',
-        ),
-        'hierarchical' => True,
-        'show_ui' => True,
-        'rewrite' => array('with_front' => False),
-        'capabilities' => $taxonomy_capabilities
-      )
-    );
-
-    register_taxonomy(
-      self::POST_TYPE_SINGULAR . '_categories',
-      self::POST_TYPE,
-      array(
-        'label' => 'Categories',
-        'labels' => array(
-          'singular_label' => 'Category',
-          'add_new_item' => 'Add New Category',
-          'edit_item' => 'Edit Category',
-        ),
-        'hierarchical' => False,
-        'show_ui' => True,
-        'rewrite' => array('with_front' => False),
-        'capabilities' => $taxonomy_capabilities
-      )
-    );
   }
 
   /**
