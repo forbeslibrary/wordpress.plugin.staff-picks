@@ -1,17 +1,8 @@
 <?php
 /**
- * Admin interface for the Forbes staff_picks plugin.
+ * Admin interface for the plugin.
  */
 class Staff_Picks_Admin {
-  // The post type (plural), in Upper_Case_With_Underscores
-  const POST_TYPE_UPPER = 'Staff_Picks';
-
-  // The post type (plural), in lower_case_with_underscores
-  const POST_TYPE = 'staff_picks';
-
-  // The post type (singular), in lower_case_with_underscores
-  const POST_TYPE_SINGULAR = 'staff_pick';
-
   public function __construct() {
     $data_file = file_get_contents(dirname( __FILE__ ) . '/post-type-data.json');
     $this->data = json_decode($data_file, true);
@@ -112,7 +103,7 @@ class Staff_Picks_Admin {
   }
 
   /**
-  *  Fix status message when user tries to publish an invalid staff pick.
+  *  Fix status message when user tries to publish an invalid post
   *
   * If the user hits the publish button the publish message will display even if
   * we have changed the status to draft during validation. This fixes that by
@@ -123,7 +114,7 @@ class Staff_Picks_Admin {
   * @wp-hook redirect_post_location
   */
   public function fix_status_message($location, $post_id) {
-    //If any staff pick errors have been queued...
+    //If any errors have been queued...
     if (get_transient( $this->data['post_type'] . "_errors_{$post->ID}" )){
       $status = get_post_status( $post_id );
       $location = add_query_arg('message', 10, $location);
@@ -145,7 +136,7 @@ class Staff_Picks_Admin {
 
   /**
    * The Weaver II theme adds a giant meta box that isn't much help with custom
-   * post types. This code removes that box from staff pick edit pages and changes
+   * post types. This code removes that box from edit pages and changes
    * the featured image box name and placement.
    *
    * @wp-hook add_meta_boxes
@@ -189,9 +180,9 @@ class Staff_Picks_Admin {
   public function custom_columns($column){
     global $post;
     $custom = get_post_custom($post->ID);
-    if (isset($custom[self::POST_TYPE_SINGULAR . '_metadata'])) {
+    if (isset($custom[$this->data['custom_field_name'])) {
       $metadata = maybe_unserialize(
-        $custom[self::POST_TYPE_SINGULAR . '_metadata'][0]
+        $custom[$this->data['custom_field_name']][0]
       );
     } else {
       $metadata = array();
