@@ -180,7 +180,7 @@ class Staff_Picks_Admin {
   public function custom_columns($column){
     global $post;
     $custom = get_post_custom($post->ID);
-    if (isset($custom[$this->data['custom_field_name'])) {
+    if (isset($custom[$this->data['custom_field_name']])) {
       $metadata = maybe_unserialize(
         $custom[$this->data['custom_field_name']][0]
       );
