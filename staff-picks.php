@@ -11,15 +11,6 @@
  */
 
 class Staff_Picks_Plugin {
-  // The post type (plural), in Upper_Case_With_Underscores
-  const POST_TYPE_UPPER = 'Staff_Picks';
-
-  // The post type (plural), in lower_case_with_underscores
-  const POST_TYPE = 'staff_picks';
-
-  // The post type (singular), in lower_case_with_underscores
-  const POST_TYPE_SINGULAR = 'staff_pick';
-
   public function __construct() {
     $data_file = file_get_contents(dirname( __FILE__ ) . '/post-type-data.json');
     $this->data = json_decode($data_file, true);
@@ -70,7 +61,7 @@ class Staff_Picks_Plugin {
 
 
   /**
-   * Registers the custom post type (self::POST_TYPE) and the custom taxonomies.
+   * Registers the custom post type {post_type} and the custom taxonomies.
    *
    * @wp-hook init
    */
@@ -170,8 +161,8 @@ class Staff_Picks_Plugin {
   function filter_single_template($template){
     global $post;
 
-    if ($post->post_type == self::POST_TYPE) {
-       $template = dirname( __FILE__ ) . '/single-staff-pick.php';
+    if ($post->post_type == $this->data['post_type']) {
+       $template = dirname( __FILE__ ) . "/single-{$this->data['post_type']}.php";
     }
     return $template;
   }
@@ -187,14 +178,16 @@ class Staff_Picks_Plugin {
   function filter_archive_template($template){
     global $post;
 
-    if (is_post_type_archive(self::POST_TYPE)
-      or is_tax(self::POST_TYPE_SINGULAR . '_categories')
-      or is_tax(self::POST_TYPE_SINGULAR . '_audiences')
-      or is_tax(self::POST_TYPE_SINGULAR . '_formats')
-      or is_tax(self::POST_TYPE_SINGULAR . '_reviewers')
-    ) {
-       $template = dirname( __FILE__ ) . '/archive-staff-pick.php';
+    $use_custom_template = is_post_type_archive($this->data['post_type']);
+
+    foreach($this->data['taxonomies'] as $taxonomy) {
+      $use_custom_template = ($use_custom_template or is_tax($taxonomy['taxonomy_name']));
     }
+
+    if ($use_custom_template) {
+       $template = dirname( __FILE__ ) . "/archive-{$this->data['post_type']}.php";
+    }
+
     return $template;
   }
 
@@ -221,7 +214,7 @@ class Staff_Picks_Plugin {
    * @wp-hook widgets_init
    */
   function register_widgets() {
-    register_widget( self::POST_TYPE_UPPER . '_Widget' );
+    register_widget( $this->data['post_type_upper'] . '_Widget' );
   }
 
   /**
