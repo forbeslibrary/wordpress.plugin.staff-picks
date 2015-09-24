@@ -114,7 +114,7 @@ class Staff_Picks_Plugin {
     global $post;
 
     if ($post->post_type == $this->data['post_type']) {
-       $template = dirname( __FILE__ ) . "/single-{$this->data['post_type']}.php";
+       $template = dirname( __FILE__ ) . "/templates/single-{$this->data['post_type']}.php";
     }
     return $template;
   }
@@ -137,7 +137,7 @@ class Staff_Picks_Plugin {
     }
 
     if ($use_custom_template) {
-       $template = dirname( __FILE__ ) . "/archive-{$this->data['post_type']}.php";
+       $template = dirname( __FILE__ ) . "/templates/archive-{$this->data['post_type']}.php";
     }
 
     return $template;
@@ -154,7 +154,6 @@ class Staff_Picks_Plugin {
   function filter_page_title($title) {
     if (staff_picks_get_title()) {
       $title = staff_picks_get_title();
-      // $blog_title = get_bloginfo( 'name' );
       return "$title";
     }
     return $title;
