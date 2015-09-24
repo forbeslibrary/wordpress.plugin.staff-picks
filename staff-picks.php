@@ -21,6 +21,9 @@ class Staff_Picks_Plugin {
   const POST_TYPE_SINGULAR = 'staff_pick';
 
   public function __construct() {
+    $data_file = file_get_contents(dirname( __FILE__ ) . '/post-type-data.json');
+    $this->data = json_decode($data_file, true);
+
     $this->load_dependencies();
     $this->add_hooks();
   }
@@ -72,10 +75,7 @@ class Staff_Picks_Plugin {
    * @wp-hook init
    */
   function init() {
-    $data_file = file_get_contents(dirname( __FILE__ ) . '/post-type-data.json');
-    $data = json_decode($data_file, true);
-
-    register_post_type( $data['post_type'], $data['post_type_data'] );
+    register_post_type( $this->data['post_type'], $this->data['post_type_data'] );
 
     $taxonomy_defaults = array(
       'show_ui' => True,
@@ -88,10 +88,10 @@ class Staff_Picks_Plugin {
       )
     );
 
-    foreach( $data['taxonomies'] as $taxonomy ) {
+    foreach( $this->data['taxonomies'] as $taxonomy ) {
       register_taxonomy(
         $taxonomy['taxonomy_name'],
-        $data['post_type'],
+        $this->data['post_type'],
         array_merge($taxonomy_defaults, $taxonomy['taxonomy_data'])
       );
     }
