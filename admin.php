@@ -49,11 +49,9 @@ class Staff_Picks_Admin {
      return;
     }
 
-    $metadata_field_name = $this->data['post_type'] . '_metadata';
-
     // Update custom field
-    if (isset($_POST[$metadata_field_name])) {
-      update_post_meta($post->ID, $metadata_field_name, $_POST[$metadata_field_name]);
+    if (isset($_POST[$this->data['custom_field_name']])) {
+      update_post_meta($post->ID, $this->data['custom_field_name'], $_POST[$this->data['custom_field_name']]);
     }
 
     // Stop interfering if this is a draft or the post is being deleted
@@ -67,8 +65,8 @@ class Staff_Picks_Admin {
     // Validation
     $errors = array();
 
-    if (isset($_POST[$metadata_field_name])) {
-      $metadata = $_POST[$metadata_field_name];
+    if (isset($_POST[$this->data['custom_field_name']])) {
+      $metadata = $_POST[$this->data['custom_field_name']];
 
       if (isset($metadata['catalog_url'])) {
         if (trim($metadata['catalog_url']) == false) {
@@ -253,52 +251,48 @@ class Staff_Picks_Admin {
    * @wp-hook pre_insert_term
    */
   public function restrict_insert_taxonomy_terms($term, $taxonomy=null) {
-    if (
-      in_array($taxonomy, array(
-        'staff_pick_categories',
-        'staff_pick_audiences',
-        'staff_pick_formats',
-        'staff_pick_reviewers'
-      ))
-      and !current_user_can('manage_options')
-    ) {
-      return new WP_Error( 'term_addition_blocked', __( 'You cannot add terms to this taxonomy' ) );
+    if (current_user_can('manage_options')) {
+      return $term;
     }
-    return $term;
+    foreach( $this->data['taxonomies'] as $t ) {
+      if ($taxonomy['taxonomy_name'] == $t) {
+        return new WP_Error( 'term_addition_blocked', __( 'You cannot add terms to this taxonomy' ) );
+      }
+    }
   }
 
   /**
-   * Outputs the html for the staff_pick metadata box on the staff_picks edit page.
+   * Outputs the html for the  metadata box on the {post_type} edit page.
    */
   public function editbox_metadata(){
     global $post;
-    if ($post->post_type !== 'staff_picks') {
+    if ($post->post_type !== $this->data['post_type']) {
       return;
     }
     $custom = get_post_custom($post->ID);
-    if (isset($custom["staff_pick_metadata"])) {
-      $staff_pick_metadata = maybe_unserialize(
-        $custom["staff_pick_metadata"][0]
+    if (isset($custom[$this->data['custom_field_name']])) {
+      $metadata = maybe_unserialize(
+        $custom[$this->data['custom_field_name']][0]
       );
     } else {
-      $staff_pick_metadata['author'] = '';
-      $staff_pick_metadata['catalog_url'] = '';
+      $metadata['author'] = '';
+      $metadata['catalog_url'] = '';
     }
     ?>
     <label>
-      <span class="staff_picks-metadata-label">Author</span>
+      <span class="<?php echo $this->data['post_type']; ?>-metadata-label">Author</span>
       <input
-        name="staff_pick_metadata[author]"
-        class="staff_picks-metadata-input"
-        value="<?php echo $staff_pick_metadata['author']; ?>"
+        name="<?php echo $this->data['custom_field_name']; ?>[author]"
+        class="<?php echo $this->data['custom_field_name']; ?>-input"
+        value="<?php echo $metadata['author']; ?>"
       />
     </label>
     <label>
-      <span class="staff_picks-metadata-label">Catalog URL</span>
+      <span class="<?php echo $this->data['custom_field_name']; ?>-label">Catalog URL</span>
       <input
-        name="staff_pick_metadata[catalog_url]"
-        class="staff_picks-metadata-input"
-        value="<?php echo $staff_pick_metadata['catalog_url']; ?>"
+        name="<?php echo $this->data['custom_field_name']; ?>[catalog_url]"
+        class="<?php echo $this->data['custom_field_name']; ?>-input"
+        value="<?php echo $metadata['catalog_url']; ?>"
       />
     </label><?php
   }
