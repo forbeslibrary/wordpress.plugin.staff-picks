@@ -40,7 +40,7 @@ class Staff_Picks_Widget extends WP_Widget {
 
     $count = ( ! empty( $instance['count'] ) ? $instance['count'] : self::DEFAULT_COUNT );
 
-    if ($instance['audience']==-1) {
+    if ($instance['staff_picks_audiences']==-1) {
       // show all
       $my_query = new WP_Query( array(
         'post_type' => $this->data['post_type'],
@@ -54,7 +54,7 @@ class Staff_Picks_Widget extends WP_Widget {
         'tax_query' => array( array (
           'taxonomy' => 'staff_pick_audiences',
           'field' => 'term_id',
-          'terms' => intval($instance['audience'])
+          'terms' => intval($instance['staff_picks_audiences'])
         ) ),
         'order' => 'DESC',
         'orderby' => 'date',
@@ -77,10 +77,10 @@ class Staff_Picks_Widget extends WP_Widget {
     wp_reset_postdata();
     if ($instance['show_link']): ?>
       <p class="<?php echo $this->data['post_type']; ?>_widget_link">
-        <?php if ($instance['audience']==-1): ?>
+        <?php if ($instance['staff_picks_audiences']==-1): ?>
           <a href="<?php echo get_post_type_archive_link($this->data['post_type']); ?>">
         <?php else: ?>
-          <a href="<?php echo get_term_link(intval($instance['audience']), 'staff_pick_audiences'); ?>">
+          <a href="<?php echo get_term_link(intval($instance['staff_picks_audiences']), 'staff_pick_audiences'); ?>">
         <?php endif; ?>
           <?php echo $instance['link_text']; ?>
         </a>
@@ -99,7 +99,7 @@ class Staff_Picks_Widget extends WP_Widget {
     $count = ! empty( $instance['count'] ) ? $instance['count'] : self::DEFAULT_COUNT;
     $show_link = isset( $instance['show_link'] ) ? $instance['show_link'] : False;
     $link_text = ! empty( $instance['link_text'] ) ? $instance['link_text'] : __("More {$this->data['post_type_data']['labels']['name']}");
-    $audience = ! empty( $instance['audience'] ) ? $instance['audience'] : -1;
+    $audience = ! empty( $instance['staff_picks_audiences'] ) ? $instance['staff_picks_audiences'] : -1;
     ?>
     <p>
       <label>
@@ -176,7 +176,7 @@ class Staff_Picks_Widget extends WP_Widget {
     $instance['count'] = ( ! empty( $new_instance['count'] ) ) ? strip_tags( intval( $new_instance['count'] ) ) : self::DEFAULT_COUNT;
     $instance['show_link'] = ! empty( $new_instance['show_link'] );
     $instance['link_text'] = ( ! empty( $new_instance['link_text'] ) ) ? strip_tags( $new_instance['link_text'] ) : '';
-    $instance['audience'] = ( ! empty( $new_instance['audience'] ) ) ? strip_tags( intval( $new_instance['audience'] ) ) : -1;
+    $instance['staff_picks_audiences'] = ( ! empty( $new_instance['audience'] ) ) ? strip_tags( intval( $new_instance['audience'] ) ) : -1;
 
     return $instance;
   }
