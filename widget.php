@@ -33,6 +33,14 @@ class Staff_Picks_Widget extends WP_Widget {
    * @param array $instance Saved values from database.
    */
   public function widget( $args, $instance ) {
+    if ( !isset($instance['staff_picks_audiences'])) {
+      $error_message = 'The settings for the ' . $this->data['post_type'] .
+        ' widget are invalid on page ' . $_SERVER['REQUEST_URI'] .
+        '. Please update the widget settings.';
+      error_log($error_message);
+      echo "<div><strong>$error_message</strong></div>";
+      return;
+    }
     echo $args['before_widget'];
     if ( ! empty( $instance['title'] ) ) {
       echo $args['before_title'] . apply_filters( 'widget_title', $instance['title'] ). $args['after_title'];
