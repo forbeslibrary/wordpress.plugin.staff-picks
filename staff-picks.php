@@ -27,6 +27,7 @@ class Staff_Picks_Plugin {
    */
   public function load_dependencies() {
     require_once(dirname( __FILE__ ) . '/helpers.php');
+    $this->helper = new Staff_Picks_Helper();
     require_once(dirname( __FILE__ ) . '/widget.php');
     if ( is_admin() ) {
       require_once(dirname( __FILE__ ) . '/admin.php');
@@ -152,8 +153,8 @@ class Staff_Picks_Plugin {
    * @wp-hook wp_title
    */
   function filter_page_title($title) {
-    if (staff_picks_get_title()) {
-      $title = staff_picks_get_title();
+    if ($this->helper->get_title()) {
+      $title = $this->helper->get_title();
       return "$title";
     }
     return $title;

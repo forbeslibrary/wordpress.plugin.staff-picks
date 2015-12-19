@@ -4,6 +4,8 @@ Template Name: Archive Staff Pick
 */
 $post = get_post();
 
+$helper = new Staff_Picks_Helper();
+
 get_header();
 ?>
 <div id="main">
@@ -21,13 +23,13 @@ get_header();
     <?php endif; ?>
     <div id="content">
       <h1 class="entry-title">
-        <?php echo staff_picks_get_title(); ?>
+        <?php echo $helper->get_title(); ?>
       </h1>
       <?php if ( have_posts() ): ?>
         <?php while ( have_posts() ): ?>
           <?php
           the_post();
-          echo staff_picks_display(get_post());
+          echo $helper->display(get_post());
           ?>
         <?php endwhile; ?>
       <?php else: ?>
@@ -51,7 +53,7 @@ get_header();
       if (is_tax()) {
         global $wp_query;
         $term = $wp_query->get_queried_object();
-        $categories = staff_picks_get_category_ids( array(
+        $categories = $helper->get_category_ids( array(
           'taxonomy' => $term->taxonomy,
           'term_id' => $term->term_id
         ));
