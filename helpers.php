@@ -12,24 +12,22 @@ class Staff_Picks_Helper {
   }
 
   /**
-   * Returns a suitable title for an staff picks archive or taxonomy page.
+   * Returns a suitable title for a staff picks archive or taxonomy page.
    */
   public function get_title() {
-    if (is_post_type_archive('staff_picks')) {
-      return __('Staff Picks');
+    $name = $this->data['post_type_data']['labels']['name'];
+
+    if (is_post_type_archive($this->data['post_type'])) {
+      return $name;
     }
-    if (is_tax('staff_pick_categories')) {
-      return single_term_title(__('Staff Picks Category: '), False);
+
+    foreach($this->data['taxonomies'] as $taxonomy) {
+      if (is_tax($taxonomy['taxonomy_name'])) {
+        return single_term_title($name . ' ' . $taxonomy['taxonomy_data']['labels']['singular_label'] . ': ', False);
+      }
+
     }
-    if (is_tax('staff_pick_audiences')) {
-      return single_term_title('Staff Picks for ', False);
-    }
-    if (is_tax('staff_pick_formats')) {
-      return single_term_title(__('Staff Picks Format: '), False);
-    }
-    if (is_tax('staff_pick_reviewers')) {
-      return single_term_title(__('Staff Picks by '), False);
-    }
+
     return Null;
   }
 
