@@ -54,9 +54,12 @@ get_header();
       if (is_tax()) {
         global $wp_query;
         $term = $wp_query->get_queried_object();
-        $categories = $helper->get_category_ids( array(
-          'taxonomy' => $term->taxonomy,
-          'term_id' => $term->term_id
+        $categories = $helper->get_limited_taxonomy_ids( array(
+          'taxonomy' => 'staff_pick_categories',
+          'term' => array(
+            'taxonomy' => $term->taxonomy,
+            'term_id' => $term->term_id
+          )
         ));
         wp_tag_cloud( array(
           'taxonomy' => 'staff_pick_categories',

@@ -12,7 +12,7 @@ class Staff_Picks_Helper {
   }
 
   /**
-   * Returns a suitable title for a staff picks archive or taxonomy page.
+   * Returns a suitable title for an archive or taxonomy page.
    */
   public function get_title() {
     $name = $this->data['post_type_data']['labels']['name'];
@@ -32,9 +32,9 @@ class Staff_Picks_Helper {
   }
 
   /**
-   * Get staff_pick_categories term ids associated with a specified taxonomy term
+   * Get a list of term ids from the specified taxonomy associated associated with a given taxonomy term
    */
-  public function get_category_ids($args) {
+  public function get_limited_taxonomy_ids($args) {
   	global $wpdb;
     $query = $wpdb->prepare("
     		SELECT DISTINCT terms2.term_id as tag_id
@@ -50,12 +50,13 @@ class Staff_Picks_Helper {
     			LEFT JOIN {$wpdb->prefix}terms as terms2 ON t2.term_id = terms2.term_id
     		WHERE
     			t1.taxonomy = '%s' AND p1.post_status = 'publish' AND terms1.term_id = '%s' AND
-    			t2.taxonomy = 'staff_pick_categories' AND p2.post_status = 'publish'
+    			t2.taxonomy = '%s' AND p2.post_status = 'publish'
     			AND p1.ID = p2.ID
     	",
       array(
-        $args['taxonomy'],
-        $args['term_id']
+        $args['term']['taxonomy'],
+        $args['term']['term_id'],
+        $args['taxonomy']
       )
     );
   	$category_ids = $wpdb->get_col($query);
