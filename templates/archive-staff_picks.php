@@ -1,6 +1,7 @@
 <?php
 /*
 Template Name: Archive Staff Pick
+Description: This template is used to display staff pick archive pages.
 */
 $post = get_post();
 
@@ -29,7 +30,7 @@ get_header();
         <?php while ( have_posts() ): ?>
           <?php
           the_post();
-          echo $helper->display(get_post());
+          load_template( dirname( __FILE__ ) . '/content-staff_picks.php', False );
           ?>
         <?php endwhile; ?>
       <?php else: ?>
