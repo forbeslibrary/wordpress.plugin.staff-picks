@@ -5,7 +5,14 @@
 
 class Staff_Picks_Widget extends WP_Widget {
 
+  /**
+   * How many items to show in the widget by default.
+   */
   const DEFAULT_COUNT = 6;
+  /**
+   * Allow widget to be filtered by a term from this taxonomy.
+   */
+  const TAXONOMY_FOR_FILTER = 'staff_pick_audiences';
 
   /**
    * Sets up the widgets name etc
@@ -33,7 +40,7 @@ class Staff_Picks_Widget extends WP_Widget {
    * @param array $instance Saved values from database.
    */
   public function widget( $args, $instance ) {
-    if ( !isset($instance['staff_picks_audiences'])) {
+    if ( !isset($instance[self::TAXONOMY_FOR_FILTER])) {
       $error_message = 'The settings for the ' . $this->data['post_type'] .
         ' widget are invalid on page ' . $_SERVER['REQUEST_URI'] .
         '. Please update the widget settings.';
@@ -48,7 +55,7 @@ class Staff_Picks_Widget extends WP_Widget {
 
     $count = ( ! empty( $instance['count'] ) ? $instance['count'] : self::DEFAULT_COUNT );
 
-    if ($instance['staff_picks_audiences']==-1) {
+    if ($instance[self::TAXONOMY_FOR_FILTER]==-1) {
       // show all
       $my_query = new WP_Query( array(
         'post_type' => $this->data['post_type'],
@@ -60,9 +67,9 @@ class Staff_Picks_Widget extends WP_Widget {
       $my_query = new WP_Query( array(
         'post_type' => $this->data['post_type'],
         'tax_query' => array( array (
-          'taxonomy' => 'staff_pick_audiences',
+          'taxonomy' => self::TAXONOMY_FOR_FILTER,
           'field' => 'term_id',
-          'terms' => intval($instance['staff_picks_audiences'])
+          'terms' => intval($instance[self::TAXONOMY_FOR_FILTER])
         ) ),
         'order' => 'DESC',
         'orderby' => 'date',
@@ -85,10 +92,10 @@ class Staff_Picks_Widget extends WP_Widget {
     wp_reset_postdata();
     if ($instance['show_link']): ?>
       <p class="<?php echo $this->data['post_type']; ?>_widget_link">
-        <?php if ($instance['staff_picks_audiences']==-1): ?>
+        <?php if ($instance[self::TAXONOMY_FOR_FILTER]==-1): ?>
           <a href="<?php echo get_post_type_archive_link($this->data['post_type']); ?>">
         <?php else: ?>
-          <a href="<?php echo get_term_link(intval($instance['staff_picks_audiences']), 'staff_pick_audiences'); ?>">
+          <a href="<?php echo get_term_link(intval($instance[self::TAXONOMY_FOR_FILTER]), self::TAXONOMY_FOR_FILTER); ?>">
         <?php endif; ?>
           <?php echo $instance['link_text']; ?>
         </a>
@@ -107,7 +114,7 @@ class Staff_Picks_Widget extends WP_Widget {
     $count = ! empty( $instance['count'] ) ? $instance['count'] : self::DEFAULT_COUNT;
     $show_link = isset( $instance['show_link'] ) ? $instance['show_link'] : False;
     $link_text = ! empty( $instance['link_text'] ) ? $instance['link_text'] : __("More {$this->data['post_type_data']['labels']['name']}");
-    $audience = ! empty( $instance['staff_picks_audiences'] ) ? $instance['staff_picks_audiences'] : -1;
+    $audience = ! empty( $instance[self::TAXONOMY_FOR_FILTER] ) ? $instance[self::TAXONOMY_FOR_FILTER] : -1;
     ?>
     <p>
       <label>
@@ -140,7 +147,7 @@ class Staff_Picks_Widget extends WP_Widget {
           <option value="-1" <?php selected($audience, -1); ?>>
             <?php _e('All'); ?>
           </option>
-          <?php foreach( get_terms('staff_pick_audiences', array('hide_empty' => false)) as $term ): ?>
+          <?php foreach( get_terms(self::TAXONOMY_FOR_FILTER, array('hide_empty' => false)) as $term ): ?>
             <option value="<?php echo $term->term_id; ?>" <?php selected($audience, $term->term_id); ?>>
               <?php echo $term->name; ?>
             </option>
@@ -184,7 +191,7 @@ class Staff_Picks_Widget extends WP_Widget {
     $instance['count'] = ( ! empty( $new_instance['count'] ) ) ? strip_tags( intval( $new_instance['count'] ) ) : self::DEFAULT_COUNT;
     $instance['show_link'] = ! empty( $new_instance['show_link'] );
     $instance['link_text'] = ( ! empty( $new_instance['link_text'] ) ) ? strip_tags( $new_instance['link_text'] ) : '';
-    $instance['staff_picks_audiences'] = ( ! empty( $new_instance['audience'] ) ) ? strip_tags( intval( $new_instance['audience'] ) ) : -1;
+    $instance[self::TAXONOMY_FOR_FILTER] = ( ! empty( $new_instance['audience'] ) ) ? strip_tags( intval( $new_instance['audience'] ) ) : -1;
 
     return $instance;
   }
