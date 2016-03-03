@@ -5,16 +5,31 @@
 
 class Staff_Picks_Widget extends WP_Widget {
 
+  /**
+   * How many items to show in the widget by default.
+   */
   const DEFAULT_COUNT = 6;
+  /**
+   * Allow widget to be filtered by a term from this taxonomy.
+   */
+  const TAXONOMY_FOR_FILTER = 'staff_pick_audiences';
 
   /**
    * Sets up the widgets name etc
    */
   public function __construct() {
+    $data_file = file_get_contents(dirname( __FILE__ ) . '/post-type-data.json');
+    $this->data = json_decode($data_file, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+      trigger_error('Could not parse invalid JSON');
+    }
+
+    $name = $this->data['post_type_data']['labels']['name'];
+
     parent::__construct(
-      'staff_picks_widget', // Base ID
-      __( 'Staff Picks Widget', 'text_domain' ), // Name
-      array( 'description' => __( 'Displays recent staff picks.', 'text_domain' ), ) // Args
+      $this->data['post_type'] . '_widget', // Base ID
+      "$name Widget", // Name
+      array( 'description' => __( "Displays recent $name" ), ) // Args
     );
   }
 
@@ -25,6 +40,14 @@ class Staff_Picks_Widget extends WP_Widget {
    * @param array $instance Saved values from database.
    */
   public function widget( $args, $instance ) {
+    if ( !isset($instance[self::TAXONOMY_FOR_FILTER])) {
+      $error_message = 'The settings for the ' . $this->data['post_type'] .
+        ' widget are invalid on page ' . $_SERVER['REQUEST_URI'] .
+        '. Please update the widget settings.';
+      error_log($error_message);
+      echo "<div><strong>$error_message</strong></div>";
+      return;
+    }
     echo $args['before_widget'];
     if ( ! empty( $instance['title'] ) ) {
       echo $args['before_title'] . apply_filters( 'widget_title', $instance['title'] ). $args['after_title'];
@@ -32,21 +55,21 @@ class Staff_Picks_Widget extends WP_Widget {
 
     $count = ( ! empty( $instance['count'] ) ? $instance['count'] : self::DEFAULT_COUNT );
 
-    if ($instance['audience']==-1) {
-      // show all staff picks
+    if ($instance[self::TAXONOMY_FOR_FILTER]==-1) {
+      // show all
       $my_query = new WP_Query( array(
-        'post_type' => 'staff_picks',
+        'post_type' => $this->data['post_type'],
         'order' => 'DESC',
         'orderby' => 'date',
         'posts_per_page' => $count,
       ) );
     } else {
       $my_query = new WP_Query( array(
-        'post_type' => 'staff_picks',
+        'post_type' => $this->data['post_type'],
         'tax_query' => array( array (
-          'taxonomy' => 'staff_pick_audiences',
+          'taxonomy' => self::TAXONOMY_FOR_FILTER,
           'field' => 'term_id',
-          'terms' => intval($instance['audience'])
+          'terms' => intval($instance[self::TAXONOMY_FOR_FILTER])
         ) ),
         'order' => 'DESC',
         'orderby' => 'date',
@@ -54,21 +77,25 @@ class Staff_Picks_Widget extends WP_Widget {
       ) );
     }
 
-    while ( $my_query->have_posts() ) {
-       $my_query->the_post();
-       if ( has_post_thumbnail() ) : ?>
-         <a href="<?php the_permalink(); ?>">
-           <?php the_post_thumbnail( 'thumbnail', array('class' => 'staff_picks_widget_image') ); ?>
-         </a>
-       <?php endif;
+    if ($my_query->have_posts()) {
+      while ( $my_query->have_posts() ) {
+        $my_query->the_post();
+        if ( has_post_thumbnail() ) : ?>
+          <a href="<?php the_permalink(); ?>">
+            <?php the_post_thumbnail( 'thumbnail', array('class' => "{$this->data['post_type']}_widget_image") ); ?>
+          </a>
+        <?php endif;
+      }
+    } else {
+      echo __("No matching {$this->data['post_data']['labels']['name']} to show.");
     }
     wp_reset_postdata();
     if ($instance['show_link']): ?>
-      <p class="staff_picks_widget_link">
-        <?php if ($instance['audience']==-1): ?>
-          <a href="<?php echo get_post_type_archive_link('staff_picks'); ?>">
+      <p class="<?php echo $this->data['post_type']; ?>_widget_link">
+        <?php if ($instance[self::TAXONOMY_FOR_FILTER]==-1): ?>
+          <a href="<?php echo get_post_type_archive_link($this->data['post_type']); ?>">
         <?php else: ?>
-          <a href="<?php echo get_term_link(intval($instance['audience']), 'staff_pick_audiences'); ?>">
+          <a href="<?php echo get_term_link(intval($instance[self::TAXONOMY_FOR_FILTER]), self::TAXONOMY_FOR_FILTER); ?>">
         <?php endif; ?>
           <?php echo $instance['link_text']; ?>
         </a>
@@ -86,8 +113,8 @@ class Staff_Picks_Widget extends WP_Widget {
     $title = ! empty( $instance['title'] ) ? $instance['title'] : __('New title');
     $count = ! empty( $instance['count'] ) ? $instance['count'] : self::DEFAULT_COUNT;
     $show_link = isset( $instance['show_link'] ) ? $instance['show_link'] : False;
-    $link_text = ! empty( $instance['link_text'] ) ? $instance['link_text'] : __('More Staff Picks');
-    $audience = ! empty( $instance['audience'] ) ? $instance['audience'] : -1;
+    $link_text = ! empty( $instance['link_text'] ) ? $instance['link_text'] : __("More {$this->data['post_type_data']['labels']['name']}");
+    $audience = ! empty( $instance[self::TAXONOMY_FOR_FILTER] ) ? $instance[self::TAXONOMY_FOR_FILTER] : -1;
     ?>
     <p>
       <label>
@@ -102,7 +129,7 @@ class Staff_Picks_Widget extends WP_Widget {
     </p>
     <p>
       <label>
-        <?php _e( 'Number of staff picks to show in widget:' ); ?>
+        <?php _e( 'Number of posts to show in widget:' ); ?>
         <input type="number"
           id=<?php echo $this->get_field_id( 'count' ); ?>
           name="<?php echo $this->get_field_name( 'count' ); ?>"
@@ -112,7 +139,7 @@ class Staff_Picks_Widget extends WP_Widget {
     </p>
     <p>
       <label>
-        <?php _e('Which staff picks to show:'); ?></br>
+        <?php _e('Which posts to show:'); ?></br>
         <select
           id="<?php echo $this->get_field_id( 'audience' ); ?>"
           name="<?php echo $this->get_field_name( 'audience' ); ?>"
@@ -120,7 +147,7 @@ class Staff_Picks_Widget extends WP_Widget {
           <option value="-1" <?php selected($audience, -1); ?>>
             <?php _e('All'); ?>
           </option>
-          <?php foreach( get_terms('staff_pick_audiences') as $term ): ?>
+          <?php foreach( get_terms(self::TAXONOMY_FOR_FILTER, array('hide_empty' => false)) as $term ): ?>
             <option value="<?php echo $term->term_id; ?>" <?php selected($audience, $term->term_id); ?>>
               <?php echo $term->name; ?>
             </option>
@@ -135,7 +162,7 @@ class Staff_Picks_Widget extends WP_Widget {
           name="<?php echo $this->get_field_name( 'show_link' ); ?>"
           <?php if ($show_link): ?>checked="checked"<?php endif; ?>
           >
-        <?php _e('Show link to staff picks page?'); ?>
+        <?php _e('Show link to archive page?'); ?>
       </label>
     </p>
     <p>
@@ -164,7 +191,7 @@ class Staff_Picks_Widget extends WP_Widget {
     $instance['count'] = ( ! empty( $new_instance['count'] ) ) ? strip_tags( intval( $new_instance['count'] ) ) : self::DEFAULT_COUNT;
     $instance['show_link'] = ! empty( $new_instance['show_link'] );
     $instance['link_text'] = ( ! empty( $new_instance['link_text'] ) ) ? strip_tags( $new_instance['link_text'] ) : '';
-    $instance['audience'] = ( ! empty( $new_instance['audience'] ) ) ? strip_tags( intval( $new_instance['audience'] ) ) : -1;
+    $instance[self::TAXONOMY_FOR_FILTER] = ( ! empty( $new_instance['audience'] ) ) ? strip_tags( intval( $new_instance['audience'] ) ) : -1;
 
     return $instance;
   }

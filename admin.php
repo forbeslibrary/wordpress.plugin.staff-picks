@@ -1,281 +1,293 @@
 <?php
 /**
- * Admin interface for the Forbes staff_picks plugin.
+ * Admin interface for the plugin.
  */
+class Staff_Picks_Admin {
+  public function __construct() {
+    $data_file = file_get_contents(dirname( __FILE__ ) . '/post-type-data.json');
+    $this->data = json_decode($data_file, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+      trigger_error('Could not parse invalid JSON');
+    }
 
-/**
-* Save custom fields from staff_picks edit page.
-*
-* @wp-hook save_post
-*/
-function staff_picks_validate_and_save( $post_id ){
-  $post =  get_post( $post_id );
-
-  if ( $post->post_type != 'staff_picks' ) {
-   return;
+    $this->add_hooks();
   }
 
-  // Update custom field
-  if (isset($_POST['staff_pick_metadata'])) {
-    update_post_meta($post->ID, 'staff_pick_metadata', $_POST['staff_pick_metadata']);
+  // admin only action hooks
+  public function add_hooks() {
+    add_action('admin_head', array($this, 'admin_css'));
+    add_action('admin_notices', array($this, 'admin_notice'));
+    add_action('dashboard_glance_items', array($this, 'add_glance_items'));
+    add_action('edit_form_after_title', array($this, 'editbox_metadata'));
+    add_action("manage_{$this->data['post_type']}_posts_custom_column", array($this, 'custom_columns'));
+    add_action('pre_insert_term', array($this, 'restrict_insert_taxonomy_terms'));
+    add_action('save_post', array($this, 'validate_and_save'));
+    add_action('add_meta_boxes', array($this, 'modify_metaboxes'));
+
+    add_filter("manage_{$this->data['post_type']}_posts_columns", array($this, 'manage_columns'));
+    add_filter('redirect_post_location', array($this, 'fix_status_message'));
   }
 
-  // Stop interfering if this is a draft or the post is being deleted
-  if ( in_array(
-    get_post_status( $post->ID ),
-    array('draft', 'auto-draft', 'trash')
-  )) {
+  /**
+  * Save custom fields from {$post_type} edit page.
+  *
+  * @wp-hook save_post
+  */
+  public function validate_and_save( $post_id ){
+    $post =  get_post( $post_id );
+
+    if ( $post->post_type != $this->data['post_type'] ) {
      return;
+    }
+
+    // Update custom field
+    if (isset($_POST[$this->data['custom_field_name']])) {
+      update_post_meta($post->ID, $this->data['custom_field_name'], $_POST[$this->data['custom_field_name']]);
+    }
+
+    // Stop interfering if this is a draft or the post is being deleted
+    if ( in_array(
+      get_post_status( $post->ID ),
+      array('draft', 'auto-draft', 'trash')
+    )) {
+       return;
+    }
+
+    // Validation
+    $errors = array();
+
+    if (isset($_POST[$this->data['custom_field_name']])) {
+      $metadata = $_POST[$this->data['custom_field_name']];
+
+      if (isset($metadata['catalog_url'])) {
+        if (trim($metadata['catalog_url']) == false) {
+          $errors[] = __('The catalog url field may not be blank');
+        }
+      } else {
+        $errors[] = __('The catalog url field was missing');
+      }
+    }
+
+    foreach( $this->data['taxonomies'] as $taxonomy ) {
+      $singular_name = $taxonomy['taxonomy_data']['labels']['singular_label'];
+      $terms = get_the_terms( $post->ID, $taxonomy['taxonomy_name'] );
+      if ($taxonomy['required'] and !$terms) {
+        $errors[] = __("{$singular_name} is required");
+      }
+      if ($taxonomy['allow_multiple'] == false and count($terms) > 1) {
+        $errors[] = __("You may only choose one {$singular_name}");
+      }
+    }
+
+    if ( !has_post_thumbnail( $post->ID ) ) {
+      $errors[] = __('You must set a cover image');
+    }
+
+    if ($errors) {
+      // Save the errors using the transients api
+      set_transient( $this->data['post_type'] . "_errors_{$post->ID}", $errors, 120 );
+
+      // we must remove this action or it will loop for ever
+      remove_action('save_post', $this->data['post_type'] . '_validate_and_save');
+
+      // Change post from published to draft
+      $post->post_status = 'draft';
+
+      // update the post
+      wp_update_post( $post );
+
+      // we must add back this action
+      add_action('save_post', $this->data['post_type'] . '_validate_and_save');
+    }
+
   }
 
-  // Validation
-  $errors = array();
+  /**
+  *  Fix status message when user tries to publish an invalid post
+  *
+  * If the user hits the publish button the publish message will display even if
+  * we have changed the status to draft during validation. This fixes that by
+  * modifying the message if any errors have been queued.
+  *
+  * FIX ME. Currently broken!
+  *
+  * @wp-hook redirect_post_location
+  */
+  public function fix_status_message($location, $post_id) {
+    //If any errors have been queued...
+    if (get_transient( $this->data['post_type'] . "_errors_{$post->ID}" )){
+      $status = get_post_status( $post_id );
+      $location = add_query_arg('message', 10, $location);
+    }
 
-  if (isset($_POST['staff_pick_metadata'])) {
-    $metadata = $_POST['staff_pick_metadata'];
+    return $location;
+  }
 
-    if (isset($metadata['catalog_url'])) {
-      if (trim($metadata['catalog_url']) == false) {
-        $errors[] = __('The catalog url field may not be blank');
-      }
+  /**
+  * Adds custom CSS to admin pages.
+  *
+  * @wp-hook admin_head
+  */
+  public function admin_css() {
+    echo '<style>';
+    readfile(dirname( __FILE__ ) . '/css/admin.css');
+    echo '</style>';
+  }
+
+  /**
+   * The Weaver II theme adds a giant meta box that isn't much help with custom
+   * post types. This code removes that box from edit pages and changes
+   * the featured image box name and placement.
+   *
+   * @wp-hook add_meta_boxes
+   */
+  public function modify_metaboxes() {
+    remove_meta_box('wii_post-box2', $this->data['post_type'], 'normal');
+    remove_meta_box( 'postimagediv', $this->data['post_type'] , 'side' );
+    add_meta_box( 'postimagediv', __('Cover Image'), 'post_thumbnail_meta_box', $this->data['post_type'], 'side', 'high' );
+  }
+
+
+  /**
+   * Displays admin notices such as validation errors
+   *
+   * @wp-hook admin_notices
+   */
+  public function admin_notice() {
+    global $post;
+
+    if (!isset($post)) {
+      return;
+    }
+
+    $errors = get_transient( $this->data['post_type'] . "_errors_{$post->ID}" );
+    if ($errors) {
+      foreach ($errors as $error): ?>
+        <div class="error">
+          <p><?php echo $error; ?></p>
+        </div>
+        <?php
+      endforeach;
+    }
+    delete_transient( $this->data['post_type'] . "_errors_{$post->ID}" );
+  }
+
+  /**
+   * Outputs the contents of each custom column on the admin page.
+   *
+   * @wp-hook manage_{$post_type}_posts_custom_column
+   */
+  public function custom_columns($column){
+    global $post;
+    $custom = get_post_custom($post->ID);
+    if (isset($custom[$this->data['custom_field_name']])) {
+      $metadata = maybe_unserialize(
+        $custom[$this->data['custom_field_name']][0]
+      );
     } else {
-      $errors[] = __('The catalog url field was missing');
+      $metadata = array();
     }
-  }
 
-  if ( !get_the_terms( $post->ID, 'staff_pick_reviewers' ) ) {
-    $errors[] = __('You must choose a reviewer');
-  } elseif ( count(get_the_terms( $post->ID, 'staff_pick_reviewers' )) > 1 ) {
-    $errors[] = __('You may only choose one reviewer');
-  }
-
-  if ( !get_the_terms( $post->ID, 'staff_pick_audiences' ) ) {
-    $errors[] = __('You must choose at least one audience');
-  }
-
-  if ( !get_the_terms( $post->ID, 'staff_pick_formats' ) ) {
-    $errors[] = __('You must choose at least one format');
-  }
-
-  if ( !has_post_thumbnail( $post->ID ) ) {
-    $errors[] = __('You must set a cover image');
-  }
-
-  if ($errors) {
-    // Save the errors using the transients api
-    set_transient( "staff_picks_errors_{$post->ID}", $errors, 120 );
-
-    // we must remove this action or it will loop for ever
-    remove_action('save_post', 'staff_picks_validate_and_save');
-
-    // Change post from published to draft
-    $post->post_status = 'draft';
-
-    // update the post
-    wp_update_post( $post );
-
-    // we must add back this action
-    add_action('save_post', 'staff_picks_validate_and_save');
-  }
-
-}
-
-/**
-*  Fix status message when user tries to publish an invalid staff pick.
-*
-* If the user hits the publish button the publish message will display even if
-* we have changed the status to draft during validation. This fixes that by
-* modifying the message if any errors have been queued.
-*
-* @wp-hook redirect_post_location
-*/
-function staff_picks_fix_status_message($location, $post_id) {
-  //If any staff pick errors have been queued...
-  if (get_transient( "staff_picks_errors_{$post->ID}" )){
-    $status = get_post_status( $post_id );
-    $location = add_query_arg('message', 10, $location);
-  }
-
-  return $location;
-}
-
-/**
-* Adds custom CSS to admin pages.
-*
-* @wp-hook admin_head
-*/
-function staff_picks_admin_css() {
-  ?>
-  <style>
-    .staff-picks-metadata-label {
-      display: block;
+    switch ($column) {
+      case $this->data['post_type'] . '_author':
+        if (isset($metadata['author'])) {
+          echo $metadata['author'];
+        }
+        break;
     }
-    .staff-picks-metadata-input {
-      display: block;
-      width: 100%;
-    }
-    #dashboard_right_now .staff_picks-count a:before,
-    #dashboard_right_now .staff_picks-count span:before {
-      content: "\f331";
-    }
-  </style>
-  <?php
-}
 
-/**
- * The Weaver II theme adds a giant meta box that isn't much help with custom
- * post types. This code removes that box from staff pick edit pages and changes
- * the featured image box name and placement.
- *
- * @wp-hook add_meta_boxes
- */
-function staff_picks_modify_metaboxes() {
-  remove_meta_box('wii_post-box2', 'staff_picks', 'normal');
-  remove_meta_box( 'postimagediv', 'staff_picks', 'side' );
-  add_meta_box( 'postimagediv', __('Cover Image'), 'post_thumbnail_meta_box', 'staff_picks', 'side', 'high' );
-}
-
-
-/**
- * Displays admin notices such as validation errors
- *
- * @wp-hook admin_notices
- */
-function staff_picks_admin_notice() {
-  global $post;
-
-  if (!isset($post)) {
-    return;
-  }
-
-  $errors = get_transient( "staff_picks_errors_{$post->ID}" );
-  if ($errors) {
-    foreach ($errors as $error): ?>
-      <div class="error">
-        <p><?php echo $error; ?></p>
-      </div>
-      <?php
-    endforeach;
-  }
-  delete_transient( "staff_picks_errors_{$post->ID}" );
-}
-
-/**
- * Outputs the contents of each custom column on the staff_picks admin page.
- *
- * @wp-hook manage_staff_picks_posts_custom_column
- */
-function staff_picks_custom_columns($column){
-  global $post;
-  $custom = get_post_custom($post->ID);
-  $metadata = $staff_pick_metadata = maybe_unserialize(
-    $custom['staff_pick_metadata'][0]
-  );
-
-  switch ($column) {
-    case 'staff-picks-author':
-      if (isset($metadata['author'])) {
-        echo $metadata['author'];
+    foreach( $this->data['taxonomies'] as $taxonomy ) {
+      if ($column == $taxonomy['taxonomy_name']) {
+        echo implode(', ', wp_get_post_terms($post->ID, $taxonomy['taxonomy_name'], array('fields' => 'names')));
       }
-      break;
-    case 'staff-picks-formats':
-      echo implode(', ', wp_get_post_terms($post->ID, 'staff_pick_formats', array('fields' => 'names')));
-      break;
-    case 'staff-picks-reviewers':
-      echo implode(', ', wp_get_post_terms($post->ID, 'staff_pick_reviewers', array('fields' => 'names')));
-      break;
-    case 'staff-picks-audiences':
-      echo implode(', ', wp_get_post_terms($post->ID, 'staff_pick_audiences', array('fields' => 'names')));
-      break;
-    case 'staff-picks-categories':
-      echo implode(', ', wp_get_post_terms($post->ID, 'staff_pick_categories', array('fields' => 'names')));
-      break;
+    }
   }
-}
 
-/**
- * Customizes the columns on the staff_picks admin page.
- *
- * @wp-hook manage_staff_picks_posts_columns
- */
-function staff_picks_manage_columns($columns){
-  $columns = array_merge( $columns, array(
-    'title' => 'Title',
-    'staff-picks-author' => 'Author',
-    'staff-picks-reviewers' => 'Reviewer',
-    'staff-picks-formats' => 'Format',
-    'staff-picks-audiences' => 'Audience',
-    'staff-picks-categories' => 'Categories',
-  ));
-
-  return $columns;
-}
-
-/**
- * Add information about staff_picks to the glance items.
- *
- * @wp-hook dashboard_glance_items
- */
-function staff_picks_add_glance_items() {
-  $pt_info = get_post_type_object('staff_picks');
-  $num_posts = wp_count_posts('staff_picks');
-  $num = number_format_i18n($num_posts->publish);
-  $text = _n( $pt_info->labels->singular_name, $pt_info->labels->name, intval($num_posts->publish) ); // singular/plural text label
-  echo '<li class="page-count '.$pt_info->name.'-count"><a href="edit.php?post_type=staff_picks">'.$num.' '.$text.'</li>';
-}
-
-/**
- * Restrict the addition of new taxonomy terms.
- *
- * @wp-hook pre_insert_term
- */
-function staff_picks_restrict_insert_taxonomy_terms($term, $taxonomy) {
-  if (
-    in_array($taxonomy, array(
-      'staff_pick_categories',
-      'staff_pick_audiences',
-      'staff_pick_formats',
-      'staff_pick_reviewers'
-    ))
-    and !current_user_can('manage_options')
-  ) {
-    return new WP_Error( 'term_addition_blocked', __( 'You cannot add terms to this taxonomy' ) );
-  }
-  return $term;
-}
-
-/**
- * Outputs the html for the staff_pick metadata box on the staff_picks edit page.
- */
-function staff_picks_editbox_metadata(){
-  global $post;
-  if ($post->post_type !== 'staff_picks') {
-    return;
-  }
-  $custom = get_post_custom($post->ID);
-  if (isset($custom["staff_pick_metadata"])) {
-    $staff_pick_metadata = maybe_unserialize(
-      $custom["staff_pick_metadata"][0]
+  /**
+   * Customizes the columns on the {$post_type} admin page.
+   *
+   * @wp-hook manage_{$post_type}_posts_columns
+   */
+  public function manage_columns($columns){
+    $custom_columns = array(
+      'title' => 'Title',
+      $this->data['post_type'] . '_author' => 'Author',
     );
-  } else {
-    $staff_pick_metadata['author'] = '';
-    $staff_pick_metadata['catalog_url'] = '';
+
+    foreach( $this->data['taxonomies'] as $taxonomy ) {
+      $custom_columns[$taxonomy['taxonomy_name']] = $taxonomy['taxonomy_data']['labels']['singular_label'];
+    }
+
+    $columns = array_merge( $columns, $custom_columns);
+
+    return $columns;
   }
-  ?>
-  <label>
-    <span class="staff-picks-metadata-label">Author</span>
-    <input
-      name="staff_pick_metadata[author]"
-      class="staff-picks-metadata-input"
-      value="<?php echo $staff_pick_metadata['author']; ?>"
-    />
-  </label>
-  <label>
-    <span class="staff-picks-metadata-label">Catalog URL</span>
-    <input
-      name="staff_pick_metadata[catalog_url]"
-      class="staff-picks-metadata-input"
-      value="<?php echo $staff_pick_metadata['catalog_url']; ?>"
-    />
-  </label><?php
+
+  /**
+   * Add information about {$post_type} to the glance items.
+   *
+   * @wp-hook dashboard_glance_items
+   */
+  public function add_glance_items() {
+    $pt_info = get_post_type_object($this->data['post_type']);
+    $num_posts = wp_count_posts($this->data['post_type']);
+    $num = number_format_i18n($num_posts->publish);
+    $text = _n( $pt_info->labels->singular_name, $pt_info->labels->name, intval($num_posts->publish) ); // singular/plural text label
+    echo '<li class="page-count ' . $pt_info->name . '-count"><a href="edit.php?post_type=' . $this->data['post_type'] . '">' . $num . ' ' . $text . '</li>';
+  }
+
+  /**
+   * Restrict the addition of new taxonomy terms.
+   *
+   * @wp-hook pre_insert_term
+   */
+  public function restrict_insert_taxonomy_terms($term, $taxonomy=null) {
+    if (current_user_can('manage_options')) {
+      return $term;
+    }
+    foreach( $this->data['taxonomies'] as $t ) {
+      if ($taxonomy['taxonomy_name'] == $t) {
+        return new WP_Error( 'term_addition_blocked', __( 'You cannot add terms to this taxonomy' ) );
+      }
+    }
+  }
+
+  /**
+   * Outputs the html for the  metadata box on the {post_type} edit page.
+   */
+  public function editbox_metadata(){
+    global $post;
+    if ($post->post_type !== $this->data['post_type']) {
+      return;
+    }
+    $custom = get_post_custom($post->ID);
+    if (isset($custom[$this->data['custom_field_name']])) {
+      $metadata = maybe_unserialize(
+        $custom[$this->data['custom_field_name']][0]
+      );
+    } else {
+      $metadata['author'] = '';
+      $metadata['catalog_url'] = '';
+    }
+    ?>
+    <label>
+      <span class="<?php echo $this->data['post_type']; ?>-metadata-label">Author</span>
+      <input
+        name="<?php echo $this->data['custom_field_name']; ?>[author]"
+        class="<?php echo $this->data['custom_field_name']; ?>-input"
+        value="<?php echo $metadata['author']; ?>"
+      />
+    </label>
+    <label>
+      <span class="<?php echo $this->data['custom_field_name']; ?>-label">Catalog URL</span>
+      <input
+        name="<?php echo $this->data['custom_field_name']; ?>[catalog_url]"
+        class="<?php echo $this->data['custom_field_name']; ?>-input"
+        value="<?php echo $metadata['catalog_url']; ?>"
+      />
+    </label><?php
+  }
 }
+
+// create an instance to load the code
+new Staff_Picks_Admin();
