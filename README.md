@@ -23,3 +23,8 @@ taxonomies.
 Each `staff_picks` post must have a cover image, author, catalog url, audience,
 and reviewer. If the post is missing any of these it will be saved as a draft
 instead of being published.
+
+## Settings
+Under the Staff Picks settings you can set a Catalog Search URL which will be
+used when fetching data by ISBN. Enter the URL for an ISBN search in your
+catalog, putting `%s` where the ISBN should go. For example `http://www.worldcat.org/isbn/%s`.
