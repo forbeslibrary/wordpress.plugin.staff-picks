@@ -15,9 +15,13 @@ class Staff_Picks_Admin {
 
   // admin only action hooks
   public function add_hooks() {
+    add_action('admin_enqueue_scripts', array($this, 'enqueue'));
     add_action('admin_head', array($this, 'admin_css'));
+    add_action('admin_init', array($this, 'init'));
+    add_action('admin_menu', array($this, 'menu'));
     add_action('admin_notices', array($this, 'admin_notice'));
     add_action('dashboard_glance_items', array($this, 'add_glance_items'));
+    add_action('edit_form_top', array($this, 'add_dialog_html'));
     add_action('edit_form_after_title', array($this, 'editbox_metadata'));
     add_action("manage_{$this->data['post_type']}_posts_custom_column", array($this, 'custom_columns'));
     add_action('pre_insert_term', array($this, 'restrict_insert_taxonomy_terms'));
@@ -29,6 +33,100 @@ class Staff_Picks_Admin {
   }
 
   /**
+     * Initializes the settings and fields using the settings API
+     *
+     * @wp-hook admin_init
+     */
+    function init() {
+      // settings api
+
+      add_settings_section(
+        // ID
+        'default',
+        // Title
+        'Catalog Search URL',
+        // Callback
+        array($this, 'output_default_settings_section'),
+        // Page
+        $this->data['post_type'] . '_settings_page'
+      );
+
+      add_settings_field(
+        // ID
+        $this->data['post_type'] . '_settings_url_template',
+        // Title
+        'Catalog Search URL Template',
+        // Callback
+        array($this, 'output_url_template_form_field'),
+        // Page
+        $this->data['post_type'] . '_settings_page'
+      );
+
+      register_setting(
+        $this->data['post_type'] . '_settings_page',
+        $this->data['post_type'] . '_settings_url_template'
+      );
+    }
+
+  /**
+   * @wp-hook admin_menu
+   */
+  function menu() {
+    add_options_page(
+      // Page Title
+      $this->data['post_type_data']['labels']['name'] . ' Settings',
+      // Menu Title
+      $this->data['post_type_data']['labels']['name'],
+      // Capability
+      'manage_options',
+      // Menu Slug (also-referred to as option group)
+      $this->data['post_type'] . '_settings_page',
+      // Callback
+      array($this, 'output_settings_page')
+    );
+  }
+
+  /**
+   * Outputs HTML for the settings page default section.
+   *
+   * This is a callback function for the Wordpress Settings API
+   */
+  function output_default_settings_section() {
+    echo ''; // no explanatory text for this section
+  }
+
+ /**
+   * Outputs HTML for the settings page.
+   *
+   * This is a callback function for the Wordpress Settings API
+   */
+  function output_settings_page() {
+    ?>
+    <h1><?php echo $this->data['post_type_data']['labels']['name'] . ' Settings'; ?></h1>
+    <form method="POST" action="options.php">
+      <?php
+      settings_fields( $this->data['post_type'] . '_settings_page' );
+      do_settings_sections( $this->data['post_type'] . '_settings_page' );
+      submit_button();
+      ?>
+    </form>
+    <?php
+  }
+
+  public function output_url_template_form_field() {
+   ?>
+   <input
+     name="<?php echo $this->data['post_type'] . '_settings_url_template' ?>"
+     id="<?php echo $this->data['post_type'] . '_settings_url_template' ?>"
+     type="text"
+     style="width: 100%;"
+     value="<?php echo get_option( $this->data['post_type'] . '_settings_url_template' ); ?>"
+   >
+   <p class="description">Enter the catalog URL query template. %s will be replaced by the ISBN.<p>
+   <?php
+  }
+
+ /**
   * Save custom fields from {$post_type} edit page.
   *
   * @wp-hook save_post
@@ -274,7 +372,7 @@ class Staff_Picks_Admin {
       <span class="<?php echo $this->data['post_type']; ?>-metadata-label">Author</span>
       <input
         name="<?php echo $this->data['custom_field_name']; ?>[author]"
-        class="<?php echo $this->data['custom_field_name']; ?>-input"
+        class="author-input <?php echo $this->data['custom_field_name']; ?>-input"
         value="<?php echo $metadata['author']; ?>"
       />
     </label>
@@ -282,11 +380,55 @@ class Staff_Picks_Admin {
       <span class="<?php echo $this->data['custom_field_name']; ?>-label">Catalog URL</span>
       <input
         name="<?php echo $this->data['custom_field_name']; ?>[catalog_url]"
-        class="<?php echo $this->data['custom_field_name']; ?>-input"
+        class="catalog_url-input <?php echo $this->data['custom_field_name']; ?>-input"
         value="<?php echo $metadata['catalog_url']; ?>"
       />
     </label><?php
   }
+
+  public function enqueue() {
+    global $post_type, $pagenow;
+    if( $post_type != $this->data['post_type'] or $pagenow != 'post-new.php') {
+      return;
+    }
+    wp_enqueue_style( 'jquery-ui',
+      plugin_dir_url( __FILE__ ) . 'css/jquery-ui.min.css'
+    );
+    wp_enqueue_style( 'jquery-ui.theme',
+      plugin_dir_url( __FILE__ ) . 'css/jquery-ui.theme.min.css'
+    );
+    wp_enqueue_style( 'jquery-ui.structures',
+      plugin_dir_url( __FILE__ ) . 'css/jquery-ui.structure.min.css'
+    );
+    wp_enqueue_script(
+      'open_library_data_fetcher',
+      plugin_dir_url( __FILE__ ) . 'js/openlibrary.js',
+      array('jquery-ui-dialog')
+    );
+  }
+
+  /**
+   * Outputs the ISBN dialogs. These are controlled and styled using JavaScript
+   */
+  public function add_dialog_html() {
+    ?>
+    <div id='isbnDialog' class='ui-widget'>
+      <p>
+        <label>ISBN <input type='text' name='ISBN' id='ISBN'></label>
+        <input type="hidden" id="catalog_url_template" value="<?php echo get_option( $this->data['post_type'] . '_settings_url_template' ); ?>">
+      </p>
+    </div>
+    <div id='coverImageDialog'>
+      <p>
+        You may wish to use this cover image. To save the image, right click
+        and select 'Save image as...' (You will still need to upload it to
+        WordPress.)
+      <p>
+      <img id='coverImageSuggestion' style='max-width:280px; max-height: 400px;'>
+    </div>
+    <?php
+  }
+
 }
 
 // create an instance to load the code
