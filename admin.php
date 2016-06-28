@@ -420,6 +420,10 @@ class Staff_Picks_Admin {
    * @wp-hook edit_form_top
    */
   public function add_dialog_html() {
+    global $post_type, $pagenow;
+    if( $post_type != $this->data['post_type'] or $pagenow != 'post-new.php') {
+      return;
+    }
     ?>
     <div id='isbnDialog' class='ui-widget'>
       <p>
