@@ -352,6 +352,8 @@ class Staff_Picks_Admin {
 
   /**
    * Outputs the html for the  metadata box on the {post_type} edit page.
+   *
+   * @wp-hook edit_form_after_title
    */
   public function editbox_metadata(){
     global $post;
@@ -386,6 +388,11 @@ class Staff_Picks_Admin {
     </label><?php
   }
 
+  /**
+   * Enqueue scripts and css files
+   *
+   * @wp-hook admin_enqueue_scripts
+   */
   public function enqueue() {
     global $post_type, $pagenow;
     if( $post_type != $this->data['post_type'] or $pagenow != 'post-new.php') {
@@ -409,8 +416,14 @@ class Staff_Picks_Admin {
 
   /**
    * Outputs the ISBN dialogs. These are controlled and styled using JavaScript
+   *
+   * @wp-hook edit_form_top
    */
   public function add_dialog_html() {
+    global $post_type, $pagenow;
+    if( $post_type != $this->data['post_type'] or $pagenow != 'post-new.php') {
+      return;
+    }
     ?>
     <div id='isbnDialog' class='ui-widget'>
       <p>

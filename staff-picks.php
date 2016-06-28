@@ -3,7 +3,7 @@
  * Plugin Name: Staff Picks
  * Plugin URI: https://github.com/forbeslibrary/wordpress.plugin.staff-picks
  * Description: Adds a custom post type 'Staff Picks'.
- * Version: 1.2
+ * Version: 1.2.1
  * Author: Benjamin Kalish
  * Author URI: https://github.com/bkalish
  * License: GNU General Public License v2
