@@ -29,7 +29,7 @@ class Staff_Picks_Admin {
     add_action('add_meta_boxes', array($this, 'modify_metaboxes'));
 
     add_filter("manage_{$this->data['post_type']}_posts_columns", array($this, 'manage_columns'));
-    add_filter('redirect_post_location', array($this, 'fix_status_message'));
+    add_filter('redirect_post_location', array($this, 'fix_status_message'), 10, 2);
   }
 
   /**
@@ -207,13 +207,11 @@ class Staff_Picks_Admin {
   * we have changed the status to draft during validation. This fixes that by
   * modifying the message if any errors have been queued.
   *
-  * FIX ME. Currently broken!
-  *
   * @wp-hook redirect_post_location
   */
   public function fix_status_message($location, $post_id) {
     //If any errors have been queued...
-    if (get_transient( $this->data['post_type'] . "_errors_{$post->ID}" )){
+    if (get_transient( $this->data['post_type'] . "_errors_{$post_id}" )){
       $status = get_post_status( $post_id );
       $location = add_query_arg('message', 10, $location);
     }
