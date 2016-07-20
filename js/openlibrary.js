@@ -9,11 +9,14 @@ jQuery( document ).ready( function() {
     'width'          : 300,
     'open'           : function(event, ui) {
       jQuery('.ui-dialog').css('z-index',1001);
+    },
+    'close'          : function(event, ui) {
+      showTaxonomyDialogs();
     }
   });
   jQuery("#isbnDialog").dialog( {
     'dialogClass'   : 'wp-dialog',
-    'modal'         : true,
+    'modal'         : false,
     'autoOpen'      : true,
     'closeOnEscape' : true,
     'title'         : 'Fetch metadata by ISBN?',
@@ -33,6 +36,7 @@ jQuery( document ).ready( function() {
           'text': 'No thanks',
           'click': function() {
             jQuery(this).dialog('close');
+            showTaxonomyDialogs();
           }
         },
         {
@@ -45,6 +49,7 @@ jQuery( document ).ready( function() {
               var key = 'ISBN:' + isbn;
               if (!(key in data)) {
                 alert('Could not find metadata for this ISBN');
+                showTaxonomyDialogs();
                 return;
               }
               var metadata = data['ISBN:' + isbn];
@@ -54,7 +59,10 @@ jQuery( document ).ready( function() {
                 title = title + ': ' + metadata.subtitle;
               }
 
-              var author = metadata.by_statement.replace(/by |[\.$]/g,'');
+              var author = '';
+              if (metadata.by_statement) {
+                author = metadata.by_statement.replace(/by |[\.$]/g,'');
+              }
 
               var catalog_url = jQuery('#catalog_url_template').val().replace('%s', isbn);
 
@@ -62,9 +70,11 @@ jQuery( document ).ready( function() {
               jQuery('.author-input').val(author);
               jQuery('.catalog_url-input').val(catalog_url);
 
-              if (metadata.cover.large) {
+              if (metadata.hasOwnProperty('cover') && metadata.cover.hasOwnProperty('large')) {
                 jQuery('#coverImageSuggestion').attr('src', metadata.cover.large);
                 jQuery('#coverImageDialog').dialog('open');
+              } else {
+                showTaxonomyDialogs();
               }
           });
           jQuery(this).dialog('close');
@@ -74,7 +84,40 @@ jQuery( document ).ready( function() {
   }).css('z-index','1001');
 });
 
-/*
+/**
+ * Create and show taxonomy dialogs
+ */
+showTaxonomyDialogs = function() {
+  var taxonomyData = JSON.parse(jQuery('#taxonomy_data').val());
+  for (var i in taxonomyData) {
+    var taxonomy = taxonomyData[i];
+    jQuery("#" + taxonomy.taxonomy_name + "div").dialog( {
+      'dialogClass'    : 'wp-dialog',
+      'modal'          : false,
+      'autoOpen'       : false,
+      'closeOnEscape'  : true,
+      'title'          : taxonomy.taxonomy_data.label,
+      'width'          : 300,
+      'open'           : function(event, ui) {
+        jQuery('.ui-dialog').css('z-index',1000);
+      },
+      'close'          : function(event, ui) {
+        jQuery(this).dialog('destroy');
+        jQuery(this).show();
+      },
+      'buttons': [
+        {
+          'text': 'OK',
+          'click': function() {
+            jQuery(this).dialog('close');
+          }
+        }
+      ]
+    }).dialog('open');
+  }
+};
+
+/**
  * Title Caps
  *
  * Ported to JavaScript By John Resig - http://ejohn.org/ - 21 May 2008

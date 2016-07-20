@@ -422,11 +422,13 @@ class Staff_Picks_Admin {
     if( $post_type != $this->data['post_type'] or $pagenow != 'post-new.php') {
       return;
     }
+    $taxonomies = htmlspecialchars(json_encode($this->data['taxonomies']), ENT_QUOTES);
     ?>
     <div id='isbnDialog' class='ui-widget'>
       <p>
         <label>ISBN <input type='text' name='ISBN' id='ISBN'></label>
         <input type="hidden" id="catalog_url_template" value="<?php echo get_option( $this->data['post_type'] . '_settings_url_template' ); ?>">
+        <input type="hidden" id="taxonomy_data" value="<?php echo $taxonomies; ?>">
       </p>
     </div>
     <div id='coverImageDialog'>
