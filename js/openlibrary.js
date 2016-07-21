@@ -1,5 +1,6 @@
-// var isbn = prompt("Fetch Open Library data by ISBN?", "");
 jQuery( document ).ready( function() {
+
+  // Create Suggsted Cover Image Dialog
   jQuery("#coverImageDialog").dialog( {
     'dialogClass'    : 'wp-dialog',
     'modal'          : true,
@@ -10,10 +11,10 @@ jQuery( document ).ready( function() {
     'open'           : function(event, ui) {
       jQuery('.ui-dialog').css('z-index',1001);
     },
-    'close'          : function(event, ui) {
-      showTaxonomyDialogs();
-    }
+    'close'          : showTaxonomyDialogs
   });
+
+  // Create ISBN dialog, prompting the user to input an ISBN
   jQuery("#isbnDialog").dialog( {
     'dialogClass'   : 'wp-dialog',
     'modal'         : false,
@@ -84,37 +85,51 @@ jQuery( document ).ready( function() {
   }).css('z-index','1001');
 });
 
+// == Function Definitions
+
 /**
  * Create and show taxonomy dialogs
+ *
+ * This function takes its data from a hidden form field that should have
+ * been injected by Wordpress
  */
 showTaxonomyDialogs = function() {
   var taxonomyData = JSON.parse(jQuery('#taxonomy_data').val());
   for (var i in taxonomyData) {
     var taxonomy = taxonomyData[i];
-    jQuery("#" + taxonomy.taxonomy_name + "div").dialog( {
-      'dialogClass'    : 'wp-dialog',
-      'modal'          : false,
-      'autoOpen'       : false,
-      'closeOnEscape'  : true,
-      'title'          : taxonomy.taxonomy_data.label,
-      'width'          : 300,
-      'open'           : function(event, ui) {
-        jQuery('.ui-dialog').css('z-index',1000);
-      },
-      'close'          : function(event, ui) {
-        jQuery(this).dialog('destroy');
-        jQuery(this).show();
-      },
-      'buttons': [
-        {
-          'text': 'OK',
-          'click': function() {
-            jQuery(this).dialog('close');
-          }
-        }
-      ]
-    }).dialog('open');
+    showTaxonomyDialog(taxonomy.taxonomy_name, taxonomy.taxonomy_data.label);
   }
+};
+
+/**
+ * Create and show the taxonomy dialog for the named taxonomy
+ *
+ * The disalogs use the existing wordpress postboxes for the taxonomy
+ */
+showTaxonomyDialog = function(taxonomy_name, taxonomy_label) {
+  jQuery("#" + taxonomy_name + "div").dialog( {
+    'dialogClass'    : 'wp-dialog',
+    'modal'          : false,
+    'autoOpen'       : false,
+    'closeOnEscape'  : true,
+    'title'          : taxonomy_label,
+    'width'          : 300,
+    'open'           : function(event, ui) {
+      jQuery('.ui-dialog').css('z-index',1000);
+    },
+    'close'          : function(event, ui) {
+      jQuery(this).dialog('destroy');
+      jQuery(this).show();
+    },
+    'buttons': [
+      {
+        'text': 'OK',
+        'click': function() {
+          jQuery(this).dialog('close');
+        }
+      }
+    ]
+  }).dialog('open');
 };
 
 /**
@@ -158,10 +173,16 @@ titleCaps = function(title){
 		});
 };
 
+/**
+ * Returns a string in lowercase
+ */
 function lower(word){
 	return word.toLowerCase();
 }
 
+/**
+ *Returns a string in uppercase
+ */
 function upper(word){
   return word.substr(0,1).toUpperCase() + word.substr(1);
 }
