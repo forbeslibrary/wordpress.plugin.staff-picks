@@ -1,3 +1,11 @@
+/**
+ * This javascript file can be loaded on post-new.php pages for this plugins
+ * custom post type. It enchances the interface, giving an option to fetch data
+ * from Open Library by ISBN and presenting the custom taxonomies as dialogs.
+ *
+ * @summary   javascript for the staff-picks plugin post-new page.
+ */
+
 jQuery( document ).ready( function() {
 
   // Create Suggsted Cover Image Dialog
