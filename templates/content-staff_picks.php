@@ -12,7 +12,7 @@ ob_start();?>
 <article id="post-<?php $post->ID ?>" class="staff_picks post hentry">
 <div class="entry-content">
   <h2>
-    <?php the_title(); ?>
+    <em><?php the_title(); ?></em>
     <?php if (!empty($metadata['author'])): ?>
       by <?php echo $metadata['author']; ?>
     <?php endif; ?>    <span class="staff_picks_format">
