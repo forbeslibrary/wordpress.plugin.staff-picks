@@ -30,7 +30,7 @@ ob_start();?>
         'class' => 'book-jacket'
       ))
       ?>
-      <p class="wp-caption-text">view/request in library catalog</p>
+      <p class="wp-caption-text">view/request</p>
   </a>
   <?php echo apply_filters('the_content', $post->post_content); ?>
 </div>
