@@ -1,7 +1,7 @@
 <?php
 /*
 Template Name: Single Staff Pick
-Description: This tempalte is used when a single staff_pick is displayed on a page of its own.
+Description: This template is used when a single staff_pick is displayed on a page of its own.
 */
 $post = get_post();
 

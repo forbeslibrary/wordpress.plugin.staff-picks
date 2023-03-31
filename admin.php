@@ -15,13 +15,11 @@ class Staff_Picks_Admin {
 
   // admin only action hooks
   public function add_hooks() {
-    add_action('admin_enqueue_scripts', array($this, 'enqueue'));
     add_action('admin_head', array($this, 'admin_css'));
     add_action('admin_init', array($this, 'init'));
     add_action('admin_menu', array($this, 'menu'));
     add_action('admin_notices', array($this, 'admin_notice'));
     add_action('dashboard_glance_items', array($this, 'add_glance_items'));
-    add_action('edit_form_top', array($this, 'add_dialog_html'));
     add_action('edit_form_after_title', array($this, 'editbox_metadata'));
     add_action("manage_{$this->data['post_type']}_posts_custom_column", array($this, 'custom_columns'));
     add_action('pre_insert_term', array($this, 'restrict_insert_taxonomy_terms'));
@@ -385,63 +383,6 @@ class Staff_Picks_Admin {
       />
     </label><?php
   }
-
-  /**
-   * Enqueue scripts and css files
-   *
-   * @wp-hook admin_enqueue_scripts
-   */
-  public function enqueue() {
-    global $post_type, $pagenow;
-    if( $post_type != $this->data['post_type'] or $pagenow != 'post-new.php') {
-      return;
-    }
-    wp_enqueue_style( 'jquery-ui',
-      plugin_dir_url( __FILE__ ) . 'css/jquery-ui.min.css'
-    );
-    wp_enqueue_style( 'jquery-ui.theme',
-      plugin_dir_url( __FILE__ ) . 'css/jquery-ui.theme.min.css'
-    );
-    wp_enqueue_style( 'jquery-ui.structures',
-      plugin_dir_url( __FILE__ ) . 'css/jquery-ui.structure.min.css'
-    );
-    wp_enqueue_script(
-      'staff_picks_admin',
-      plugin_dir_url( __FILE__ ) . 'js/admin.js',
-      array('jquery-ui-dialog')
-    );
-  }
-
-  /**
-   * Outputs the ISBN dialogs. These are controlled and styled using JavaScript
-   *
-   * @wp-hook edit_form_top
-   */
-  public function add_dialog_html() {
-    global $post_type, $pagenow;
-    if( $post_type != $this->data['post_type'] or $pagenow != 'post-new.php') {
-      return;
-    }
-    $taxonomies = htmlspecialchars(json_encode($this->data['taxonomies']), ENT_QUOTES);
-    ?>
-    <div id='isbnDialog' class='ui-widget'>
-      <p>
-        <label>ISBN <input type='text' name='ISBN' id='ISBN'></label>
-        <input type="hidden" id="catalog_url_template" value="<?php echo get_option( $this->data['post_type'] . '_settings_url_template' ); ?>">
-        <input type="hidden" id="taxonomy_data" value="<?php echo $taxonomies; ?>">
-      </p>
-    </div>
-    <div id='coverImageDialog'>
-      <p>
-        You may wish to use this cover image. To save the image, right click
-        and select 'Save image as...' (You will still need to upload it to
-        WordPress.)
-      <p>
-      <img id='coverImageSuggestion' style='max-width:280px; max-height: 400px;'>
-    </div>
-    <?php
-  }
-
 }
 
 // create an instance to load the code
